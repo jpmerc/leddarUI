@@ -17,16 +17,12 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
-    void setupLineStyleDemo(QCustomPlot *customPlot);
+    void addGraph(QCustomPlot *customPlot);
+
+    Ui::MainWindow* getUI();
     
 private:
     Ui::MainWindow *ui;
-
-    QString demoName;
-    QTimer dataTimer;
-    QCPItemTracer *itemDemoPhaseTracer;
-    int currentDemoIndex;
-
 };
 
 #endif // MAINWINDOW_H

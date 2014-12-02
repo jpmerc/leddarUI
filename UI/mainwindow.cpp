@@ -15,6 +15,43 @@ MainWindow::MainWindow(QWidget *parent) :
 
     addGraph(ui->customPlot);
 
+
+    this->show();
+
+
+    QVector<double> x(15), y(15);
+
+    for(int i=0; i < 16; i++){
+        x.push_back(i);
+        if(i%3 == 0) y.push_back(i*4);
+        else if(i%3 == 1) y.push_back(i/2);
+        else y.push_back(i);
+    }
+
+    ui->customPlot->graph()->setData(x, y);
+
+    ui->customPlot->replot(QCustomPlot::rpImmediate);
+
+
+//    sleep(5);
+
+//    QVector<double> x2(15), y2(15);
+
+//    for(int i=0; i < 16; i++){
+//        x2.push_back(i);
+//        if(i%3 == 0) y2.push_back(i*1.4);
+//        else if(i%3 == 1) y2.push_back(i/1.2);
+//        else y2.push_back(i*1.5);
+//    }
+
+//    ui->customPlot->graph()->setData(x, y);
+//    ui->customPlot->replot(QCustomPlot::rpImmediate);
+
+
+
+
+
+
 }
 
 MainWindow::~MainWindow()
@@ -25,40 +62,29 @@ MainWindow::~MainWindow()
 
 void MainWindow::addGraph(QCustomPlot *customPlot)
 {
-    demoName = "Line Style Demo";
-    customPlot->legend->setVisible(true);
+
+
+    customPlot->legend->setVisible(false);
     customPlot->legend->setFont(QFont("Helvetica", 9));
     QPen pen;
-
-
     customPlot->addGraph();
-
     customPlot->graph()->setPen(pen);
     customPlot->graph()->setName("lsStepCenter");
     customPlot->graph()->setLineStyle(QCPGraph::lsStepCenter);
     customPlot->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 5));
-    // generate data:
-    QVector<int> bins;
-    QVector<double> x(15), y(15);
-
-    for(int i=0; i < 16; i++){
-        x.push_back(i);
-        if(i%3 == 0) y.push_back(i*4);
-        else if(i%3 == 1) y.push_back(i/2);
-        else y.push_back(i);
-    }
-
-    customPlot->graph()->setData(x, y);
-    customPlot->graph()->rescaleAxes(true);
-    //  }
-    // zoom out a bit:
-    customPlot->yAxis->scaleRange(1.1, customPlot->yAxis->range().center());
-    customPlot->xAxis->scaleRange(1.1, customPlot->xAxis->range().center());
-    // set blank axis lines:
+    customPlot->yAxis->setRange(0, 50);
+    customPlot->xAxis->setRange(0, 16);
     customPlot->xAxis->setTicks(false);
     customPlot->yAxis->setTicks(true);
     customPlot->xAxis->setTickLabels(false);
     customPlot->yAxis->setTickLabels(true);
-    // make top right axes clones of bottom left axes:
     customPlot->axisRect()->setupFullAxesBox();
+    customPlot->legend->setVisible(true);
+    customPlot->legend->setFont(QFont("Helvetica", 9));
+
+    customPlot->replot(QCustomPlot::rpImmediate);
+}
+
+Ui::MainWindow* MainWindow::getUI(){
+    return ui;
 }
