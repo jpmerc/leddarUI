@@ -22,7 +22,14 @@ TARGET_LINK_LIBRARIES(leddarUI ${QT_LIBRARIES})
 include_directories(include)
 link_directories(${PROJECT_SOURCE_DIR}/lib)
 
-add_executable(leddartech_node src/leddartech.cpp)
-target_link_libraries(leddartech_node LeddarTech Leddar LeddarC)
+add_executable(leddartech_node 
+				src/leddartech.cpp 
+				include/LeddarC.h 
+				include/LeddarCommands.h 
+				include/LeddarProperties.h 
+				include/LeddarResults.h
+)
+
+target_link_libraries(leddartech_node LeddarTech Leddar LeddarC leddarUI)
 
 
