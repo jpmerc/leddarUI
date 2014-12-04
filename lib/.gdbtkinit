@@ -1,0 +1,125 @@
+# GDBtk Init file
+# GDBtkInitVersion: 1
+[global]
+	font/bold=-family courier -size 12 -weight bold
+	font/default=-family courier -size 12
+	font/menu=-family helvetica -size 12
+	font/status=-family helvetica -size 11
+	font/fixed=-family courier -size 12
+	font/italic=-family courier -size 12 -slant italic
+[gdb]
+	main_names=main MAIN___ MAIN__ cyg_user_start cyg_start
+	compat=GNOME
+	use_icons=1
+	B1_behavior=1
+	recent-projects=/home/louisp/louisp_stat999_3651/Projects/PC/main/Release/LeddarCDemo
+	use_color_schemes=1
+	ImageDir=images2
+	mode=0
+	control_target=1
+[load]
+	main=1
+	verbose=0
+	baud=38400
+	exit=1
+	port=/dev/ttyS0
+	check=0
+	bp_at_func=0
+[console]
+	wrap=0
+	prompt=(gdb) 
+	prompt_fg=DarkGreen
+	log_fg=green
+	font=global/fixed
+	target_fg=blue
+	error_fg=red
+	deleteLeft=1
+[src]
+	tab_size=8
+	run_attach=0
+	trace_fg=magenta
+	thread_fg=pink
+	font=global/fixed
+	top_control=1
+	bp_fg=red
+	run_run=1
+	run_cont=0
+	source2_fg=navy
+	break_fg=black
+	handlebg=red
+	disabled_fg=black
+	run_load=0
+	temp_bp_fg=orange
+	disassembly-flavor=att
+	PC_TAG=green
+	variableBalloons=1
+	STACK_TAG=gold
+	BROWSE_TAG=#9595e2
+	linenums=1
+[reg]
+	rows=16
+[stack]
+	font=global/fixed
+[locals]
+[watch]
+[bp]
+	show_threads=0
+[search]
+	last_symbol=G
+	filter_mode=starts with
+[process]
+[geometry]
+	.watchwin0.watchwin=342x273+928+24
+	.srcwin0.srcwin=1146x525+70+46
+[help]
+[browser]
+	layout=2
+	hide_h=0
+[kod]
+	show_icon=0
+[window]
+	active={ManagedWin::open SrcWin}
+[session]
+	/home/louisp/louisp_stat999_3651/Projects/PC/main/Release/LeddarCDemo/run_cont=0
+	/home/louisp/louisp_stat999_3651/Projects/PC/main/Release/LeddarCDemo/pwd=/home/louisp/louisp_stat999_3651/Projects/PC/main/Release
+	/home/louisp/louisp_stat999_3651/Projects/PC/main/Release/LeddarCDemo/executable=/home/louisp/louisp_stat999_3651/Projects/PC/main/Release/LeddarCDemo
+	/home/louisp/louisp_stat999_3651/Projects/PC/main/Release/LeddarCDemo/all-keys=run_cont run_run breakpoints executable dirs target_cmd pwd port bg run_attach run_load args target hostname
+	/home/louisp/louisp_stat999_3651/Projects/PC/main/Release/LeddarCDemo/bg=0
+	/home/louisp/louisp_stat999_3651/Projects/PC/main/Release/LeddarCDemo/run_run=1
+	/home/louisp/louisp_stat999_3651/Projects/PC/main/Release/LeddarCDemo/dirs=$cdir:$cwd
+	/home/louisp/louisp_stat999_3651/Projects/PC/main/Release/LeddarCDemo/run_attach=0
+	/home/louisp/louisp_stat999_3651/Projects/PC/main/Release/LeddarCDemo/run_load=0
+	/home/louisp/louisp_stat999_3651/Projects/PC/main/Release/LeddarCDemo/breakpoints={{break main} 1 {} {}} {{break /home/louisp/louisp_stat999_3651/Projects/PC/main/SDK/LeddarC/LeddarC.cpp:1259} 1 {} {}} {{break /home/louisp/louisp_stat999_3651/Projects/PC/main/Leddar/Base/RecordPlayer.cpp:103} 1 {} {}} {{break /home/louisp/louisp_stat999_3651/Projects/PC/main/Leddar/Base/RecordPlayerV3.cpp:103} 1 {} {}} {{break /home/louisp/louisp_stat999_3651/Projects/PC/main/dtec/Sensor/Configuration.cpp:334} 1 {} {}} {{break /home/louisp/louisp_stat999_3651/Projects/PC/main/dtec/Sensor/Zone.cpp:1043} 1 {} {}}
+[mem]
+	size=4
+	ascii_char=.
+	numbytes=0
+	color=green
+	format=x
+	ascii=1
+	bytes_per_row=16
+[bg]
+	9=#ffb0ff
+	8=#ffffb0
+	7=#d0d0d0
+	6=#d0d0ff
+	5=#d0ffd0
+	4=#d0ffff
+	3=#ffd0d0
+	2=#ffd0ff
+	1=#ffffd0
+	15=#d0b0d0
+	0=#ffffff
+	14=#b0b0b0
+	13=#b0b0ff
+	12=#b0ffb0
+	11=#b0ffff
+	10=#ffb0b0
+[ipc]
+	cont_button=1
+	port=9909
+	stop_button=1
+	step_button=1
+	run_button=1
+	enabled=0
+	exit=1

@@ -16,24 +16,8 @@ MainWindow::MainWindow(QWidget *parent) :
     addGraph(ui->customPlot);
 
 
-    this->show();
 
 
-    QVector<double> x(15), y(15);
-
-    for(int i=0; i < 16; i++){
-        x.push_back(i);
-        if(i%3 == 0) y.push_back(i*4);
-        else if(i%3 == 1) y.push_back(i/2);
-        else y.push_back(i);
-    }
-
-    ui->customPlot->graph()->setData(x, y);
-
-    ui->customPlot->replot(QCustomPlot::rpImmediate);
-
-
-//    sleep(5);
 
 //    QVector<double> x2(15), y2(15);
 
@@ -44,8 +28,9 @@ MainWindow::MainWindow(QWidget *parent) :
 //        else y2.push_back(i*1.5);
 //    }
 
-//    ui->customPlot->graph()->setData(x, y);
-//    ui->customPlot->replot(QCustomPlot::rpImmediate);
+
+//    sleep(5);
+
 
 
 
@@ -72,7 +57,7 @@ void MainWindow::addGraph(QCustomPlot *customPlot)
     customPlot->graph()->setName("lsStepCenter");
     customPlot->graph()->setLineStyle(QCPGraph::lsStepCenter);
     customPlot->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 5));
-    customPlot->yAxis->setRange(0, 50);
+    customPlot->yAxis->setRange(0, 1000);
     customPlot->xAxis->setRange(0, 16);
     customPlot->xAxis->setTicks(false);
     customPlot->yAxis->setTicks(true);
@@ -82,9 +67,15 @@ void MainWindow::addGraph(QCustomPlot *customPlot)
     customPlot->legend->setVisible(true);
     customPlot->legend->setFont(QFont("Helvetica", 9));
 
-    customPlot->replot(QCustomPlot::rpImmediate);
+    //customPlot->replot(QCustomPlot::rpImmediate);
 }
 
 Ui::MainWindow* MainWindow::getUI(){
     return ui;
+}
+
+void MainWindow::setGraphData(QVector<double> *vec_x, QVector<double> *vec_y){
+
+    ui->customPlot->graph()->setData(*vec_x, *vec_y);
+    ui->customPlot->replot(QCustomPlot::rpImmediate);
 }

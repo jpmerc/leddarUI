@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include <QTimer>
-#include <qcustomplot.h>
+#include <UI/qcustomplot.h>
 
 namespace Ui {
 class MainWindow;
@@ -18,6 +18,7 @@ public:
     ~MainWindow();
 
     void addGraph(QCustomPlot *customPlot);
+    void setGraphData(QVector<double> *vec_x, QVector<double> *vec_y);
 
     Ui::MainWindow* getUI();
     
