@@ -2,3 +2,5 @@ UI-build-desktop-Qt_4_8_1_in_PATH__System__Release
 UI-build-desktop-Desktop_Qt_4_8_0_for_GCC__Qt_SDK__Release/
 *.pro.user
 *.*~
+build/*
+lib/libleddarUI.a
