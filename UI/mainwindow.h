@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QTimer>
 #include <UI/qcustomplot.h>
+#include <QMutex>
 
 namespace Ui {
 class MainWindow;
@@ -18,12 +19,26 @@ public:
     ~MainWindow();
 
     void addGraph(QCustomPlot *customPlot);
-    void setGraphData(QVector<double> *vec_x, QVector<double> *vec_y);
+
+    void setData(QVector<double> *vec_x, QVector<double> *vec_y);
+
 
     Ui::MainWindow* getUI();
-    
+
+
 private:
     Ui::MainWindow *ui;
+    QVector<double> *x_data_;
+    QVector<double> *y_data_;
+    QMutex data_mutex;
+
+    QTimer *dataRateTimer;
+    double graph_update_frequency;
+
+
+private slots:
+    void refreshGraphData();
+
 };
 
 #endif // MAINWINDOW_H

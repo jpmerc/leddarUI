@@ -5,6 +5,7 @@
 #include <QScreen>
 #include <QMessageBox>
 #include <QMetaEnum>
+#include <iostream>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -15,7 +16,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     addGraph(ui->customPlot);
 
-
+    x_data_ = new QVector<double>();
+    y_data_ = new QVector<double>();
 
 
 
@@ -32,7 +34,10 @@ MainWindow::MainWindow(QWidget *parent) :
 //    sleep(5);
 
 
-
+    dataRateTimer = new QTimer(this);
+    graph_update_frequency = 5;
+    dataRateTimer->start( 1000 / graph_update_frequency );
+    connect(this->dataRateTimer, SIGNAL(timeout()), this, SLOT(refreshGraphData()));
 
 
 
@@ -57,7 +62,7 @@ void MainWindow::addGraph(QCustomPlot *customPlot)
     customPlot->graph()->setName("lsStepCenter");
     customPlot->graph()->setLineStyle(QCPGraph::lsStepCenter);
     customPlot->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 5));
-    customPlot->yAxis->setRange(0, 1000);
+    customPlot->yAxis->setRange(0, 1);
     customPlot->xAxis->setRange(0, 16);
     customPlot->xAxis->setTicks(false);
     customPlot->yAxis->setTicks(true);
@@ -74,8 +79,19 @@ Ui::MainWindow* MainWindow::getUI(){
     return ui;
 }
 
-void MainWindow::setGraphData(QVector<double> *vec_x, QVector<double> *vec_y){
-
-    ui->customPlot->graph()->setData(*vec_x, *vec_y);
+void MainWindow::refreshGraphData(){
+    std::cout << "refresh " << std::endl;
+    data_mutex.lock();
+    ui->customPlot->graph()->setData(*x_data_, *y_data_);
+    data_mutex.unlock();
     ui->customPlot->replot(QCustomPlot::rpImmediate);
 }
+
+void MainWindow::setData(QVector<double> *vec_x, QVector<double> *vec_y){
+    data_mutex.lock();
+    x_data_ = vec_x;
+    y_data_ = vec_y;
+    data_mutex.unlock();
+}
+
+

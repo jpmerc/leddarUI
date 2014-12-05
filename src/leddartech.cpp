@@ -40,16 +40,54 @@
 #include <QtGui/QApplication>
 #include <unistd.h>
 
+#include <QThread>
+#include <QMutex>
+
 
 #define ARRAY_LEN( a )  (sizeof(a)/sizeof(a[0]))
+
+static void MainMenu( void );
 
 // Global variable to avoid passing to each function.
 static LeddarHandle gHandle=NULL;
 
+static MainWindow* w_;
 
 //sensor_msgs::LaserScan constructLeddarMessage(std::vector<double> data);
 //ros::Publisher leddar_publisher;
 //int leddar_sequence_number = 0;
+
+
+class leddarThread : public QThread
+{
+public:
+    leddarThread(MainWindow *in_w, QApplication* in_app);
+
+protected:
+    void run();
+
+private:
+    MainWindow* w;
+    QApplication* app;
+
+ };
+
+leddarThread::leddarThread(MainWindow *in_w, QApplication *in_app){
+    w = in_w;
+    app = in_app;
+}
+
+void leddarThread::run(){
+
+    gHandle = LeddarCreate();
+
+    MainMenu();
+
+    LeddarDestroy( gHandle );
+
+    this->exit();
+    app->exit();
+ }
 
 
 // *****************************************************************************
@@ -138,15 +176,28 @@ DataCallback( void *aHandle, unsigned int aLevels )
         printf( "%6d ", LeddarGetCurrentRecordIndex( gHandle ) );
     }
 
-//    std::vector<double> leddar_data;
+
+    QVector<double> x_data;
+    QVector<double> y_data;
+
     for( i=0, j=0; (i<lCount) && (j<16); ++i )
     {
         printf( "%5.2f ", lDetections[i].mDistance );
-//        leddar_data.push_back(lDetections[i].mDistance);
+        x_data.push_back(j);
+        y_data.push_back(lDetections[i].mDistance);
         ++j;
     }
-    puts( "" );
 
+    int to_fill = 16 - x_data.size();
+    for(int i = 0; i < to_fill; i++){
+        x_data.push_back(0);
+        y_data.push_back(0);
+    }
+
+    w_->setData(&x_data, &y_data);
+
+
+    puts( "" );
 
 //    sensor_msgs::LaserScan message = constructLeddarMessage(leddar_data);
 //    leddar_publisher.publish(message);
@@ -647,28 +698,44 @@ int main(int argc, char** argv){
 
 
     QApplication a(argc, argv);
-    MainWindow w;
-    w.show();
+    //MainWindow w;
+    w_ = new MainWindow();
 
-    for(int j=0; j < 1000; j++){
-        QVector<double> x(15), y(15);
-        for(int i=0; i < 16; i++){
-            x.push_back(i);
-            if(i%3 == 0) y.push_back(j);
-            else if(i%3 == 1) y.push_back(j);
-            else y.push_back(j);
-        }
-        w.setGraphData(&x, &y);
-        sleep(1);
+    w_->show();
 
-    }
+//    for(int j=0; j < 1000; j++){
+//        QVector<double> x(15), y(15);
+//        for(int i=0; i < 16; i++){
+//            x.push_back(i);
+//            if(i%3 == 0) y.push_back(j);
+//            else if(i%3 == 1) y.push_back(j);
+//            else y.push_back(j);
+//        }
+//        w_->setGraphData(&x, &y);
+//        usleep(1000);
+
+//    }
+
+//    QVector<double> x(15), y(15);
+//    for(int i=0; i < 16; i++){
+//        x.push_back(i);
+//        y.push_back(0);
+//    }
+//    w_->setGraphData(&x, &y);
+
+    leddarThread leddar_thread(w_, &a);
+    leddar_thread.start();
+
+    a.exec();
+    leddar_thread.exit();
 
 
-    gHandle = LeddarCreate();
 
-    MainMenu();
+//    gHandle = LeddarCreate();
 
-    LeddarDestroy( gHandle );
+//    MainMenu();
+
+//    LeddarDestroy( gHandle );
 
     return 0;
 }
