@@ -20,7 +20,7 @@ TARGET_LINK_LIBRARIES(leddarUI ${QT_LIBRARIES})
 
 
 include_directories(include)
-link_directories(${PROJECT_SOURCE_DIR}/lib)
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
 add_executable(leddartech_node 
 				src/leddartech.cpp 
