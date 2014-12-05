@@ -80,7 +80,7 @@ Ui::MainWindow* MainWindow::getUI(){
 }
 
 void MainWindow::refreshGraphData(){
-    std::cout << "refresh " << std::endl;
+    //std::cout << "refresh " << std::endl;
     data_mutex.lock();
     ui->customPlot->graph()->setData(*x_data_, *y_data_);
     data_mutex.unlock();
