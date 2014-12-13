@@ -3,6 +3,8 @@ PROJECT(leddarUI)
  
 FIND_PACKAGE(Qt4 REQUIRED)
 INCLUDE(${QT_USE_FILE})
+
+set(COMPILE_RASPBERRY_PI FALSE)
  
 
 #set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build)
@@ -18,16 +20,23 @@ ADD_LIBRARY(leddarUI UI/mainwindow.cpp UI/qcustomplot.cpp ${MOCSrcs} ${UISrcs})
 TARGET_LINK_LIBRARIES(leddarUI ${QT_LIBRARIES})
 
 
+if(COMPILE_RASPBERRY_PI)
+	set(LEDDARTECH_INCLUDE_DIRECTORY include_pi)
+	set(LEDDARTECH_LIB_DIRECTORY lib_pi)
+else()
+	set(LEDDARTECH_INCLUDE_DIRECTORY include)
+	set(LEDDARTECH_LIB_DIRECTORY lib)	
+endif(COMPILE_RASPBERRY_PI)
 
-include_directories(include)
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib)
+include_directories(${LEDDARTECH_INCLUDE_DIRECTORY})
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/${LEDDARTECH_LIB_DIRECTORY})
 
 add_executable(leddartech_node 
 				src/leddartech.cpp 
-				include/LeddarC.h 
-				include/LeddarCommands.h 
-				include/LeddarProperties.h 
-				include/LeddarResults.h
+				${LEDDARTECH_INCLUDE_DIRECTORY}/LeddarC.h 
+				${LEDDARTECH_INCLUDE_DIRECTORY}/LeddarCommands.h 
+				${LEDDARTECH_INCLUDE_DIRECTORY}/LeddarProperties.h 
+				${LEDDARTECH_INCLUDE_DIRECTORY}/LeddarResults.h
 )
 
 target_link_libraries(leddartech_node LeddarTech Leddar LeddarC leddarUI)
