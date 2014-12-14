@@ -82,7 +82,7 @@ Ui::MainWindow* MainWindow::getUI(){
 void MainWindow::refreshGraphData(){
     //std::cout << "refresh " << std::endl;
     data_mutex.lock();
-    std::cout <<  "Size(x) = " << x_data_->size() <<  "  Size(y) = " << y_data_->size() <<  std::endl;
+    //std::cout <<  "Size(x) = " << x_data_->size() <<  "  Size(y) = " << y_data_->size() <<  std::endl;
     ui->customPlot->graph()->setData(*x_data_, *y_data_);
     data_mutex.unlock();
     ui->customPlot->replot(QCustomPlot::rpImmediate);
@@ -90,8 +90,8 @@ void MainWindow::refreshGraphData(){
 
 void MainWindow::setData(QVector<double> *vec_x, QVector<double> *vec_y){
     data_mutex.lock();
-    x_data_ = vec_x;
-    y_data_ = vec_y;
+    *x_data_ = *vec_x;
+    *y_data_ = *vec_y;
     data_mutex.unlock();
 }
 
