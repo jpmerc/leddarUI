@@ -82,7 +82,7 @@ Ui::MainWindow* MainWindow::getUI(){
 void MainWindow::refreshGraphData(){
     //std::cout << "refresh " << std::endl;
     data_mutex.lock();
-    cout <<  "Size(x) = " << x_data_->size() <<  "  Size(y) = " << y_data_->size() <<  endl;
+    std::cout <<  "Size(x) = " << x_data_->size() <<  "  Size(y) = " << y_data_->size() <<  std::endl;
     ui->customPlot->graph()->setData(*x_data_, *y_data_);
     data_mutex.unlock();
     ui->customPlot->replot(QCustomPlot::rpImmediate);
