@@ -18,29 +18,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     x_data_ = new QVector<double>();
     y_data_ = new QVector<double>();
-
-
-
-//    QVector<double> x2(15), y2(15);
-
-//    for(int i=0; i < 16; i++){
-//        x2.push_back(i);
-//        if(i%3 == 0) y2.push_back(i*1.4);
-//        else if(i%3 == 1) y2.push_back(i/1.2);
-//        else y2.push_back(i*1.5);
-//    }
-
-
-//    sleep(5);
-
+    plot_min_range = 0;
+    plot_max_range = 1;
 
     dataRateTimer = new QTimer(this);
     graph_update_frequency = 5;
     dataRateTimer->start( 1000 / graph_update_frequency );
     connect(this->dataRateTimer, SIGNAL(timeout()), this, SLOT(refreshGraphData()));
-
-
-
 
 }
 
@@ -52,8 +36,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::addGraph(QCustomPlot *customPlot)
 {
-
-
     customPlot->legend->setVisible(false);
     customPlot->legend->setFont(QFont("Helvetica", 9));
     QPen pen;
@@ -62,7 +44,7 @@ void MainWindow::addGraph(QCustomPlot *customPlot)
     customPlot->graph()->setName("lsStepCenter");
     customPlot->graph()->setLineStyle(QCPGraph::lsStepCenter);
     customPlot->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 5));
-    customPlot->yAxis->setRange(0, 1);
+    customPlot->yAxis->setRange(plot_min_range, plot_max_range);
     customPlot->xAxis->setRange(0, 16);
     customPlot->xAxis->setTicks(false);
     customPlot->yAxis->setTicks(true);
@@ -82,10 +64,17 @@ Ui::MainWindow* MainWindow::getUI(){
 void MainWindow::refreshGraphData(){
     //std::cout << "refresh " << std::endl;
     data_mutex.lock();
-    //std::cout <<  "Size(x) = " << x_data_->size() <<  "  Size(y) = " << y_data_->size() <<  std::endl;
-    ui->customPlot->graph()->setData(*x_data_, *y_data_);
+    QVector<double> data_x = *x_data_;
+    QVector<double> data_y = *y_data_;
     data_mutex.unlock();
+
+    //std::cout <<  "Size(x) = " << data_x.size() <<  "  Size(y) = " << data_y.size() <<  std::endl;
+
+    ui->customPlot->graph()->setData(data_x, data_y);
     ui->customPlot->replot(QCustomPlot::rpImmediate);
+    //ui->customPlot->graph()->rescaleAxes(true);
+    updateViewRange(&data_y);
+    ui->customPlot->yAxis->setRange(plot_min_range, plot_max_range);
 }
 
 void MainWindow::setData(QVector<double> *vec_x, QVector<double> *vec_y){
@@ -93,6 +82,31 @@ void MainWindow::setData(QVector<double> *vec_x, QVector<double> *vec_y){
     *x_data_ = *vec_x;
     *y_data_ = *vec_y;
     data_mutex.unlock();
+}
+
+
+void MainWindow::updateViewRange(QVector<double> *range_data){
+
+    double max_value = 0;
+    for(int i=0; i < range_data->size(); i++){
+        if(range_data->at(i) > max_value) max_value = range_data->at(i);
+    }
+
+    double max_view_range = 1.1 * max_value;
+
+    // Increase the length of free space at the top if data is greather than what can be shown in plot
+    if(max_value >= plot_max_range){
+        plot_max_range = max_view_range;
+    }
+
+    // Mostly for when the range data becomes shorter than the plot range
+    else{
+        double plotTopQuartile = 0.75 * plot_max_range;
+        if(max_value < plotTopQuartile){
+             plot_max_range = max_view_range;
+        }
+    }
+
 }
 
 

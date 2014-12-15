@@ -26,6 +26,9 @@
 // *****************************************************************************
 
 
+//CODE MODIFIED BY JEAN_PHILIPPE MERCIER, UNIVERSITE LAVAL
+
+
 //#include <ros/ros.h>
 //#include <sensor_msgs/LaserScan.h>
 //#include <angles/angles.h>
@@ -47,6 +50,9 @@
 #define ARRAY_LEN( a )  (sizeof(a)/sizeof(a[0]))
 
 static void MainMenu( void );
+static void ReadLiveData( void );
+static unsigned char DataCallback( void *aHandle, unsigned int aLevels );
+static void CheckError( int aCode );
 
 // Global variable to avoid passing to each function.
 static LeddarHandle gHandle=NULL;
@@ -81,7 +87,34 @@ void leddarThread::run(){
 
     gHandle = LeddarCreate();
 
-    MainMenu();
+    char lAddress[24];
+    lAddress[0] = 0;
+
+    if ( LeddarConnect( gHandle, lAddress ) == LD_SUCCESS )
+    {
+        if( LeddarGetConnected( gHandle ) )
+        {
+            CheckError( LeddarStartDataTransfer( gHandle, LDDL_DETECTIONS ) );
+            CheckError( LeddarAddCallback( gHandle, DataCallback, gHandle ) );
+           // ReadLiveData();
+        }
+    }
+    else
+    {
+        puts( "\nConnection failed!" );
+    }
+
+
+    // LOOP PINGING THE SENSOR (ENDS THE PROGRAM IF NOT PINGABLE FOR A CERTAIN TIME)
+    int ping_fail = 0;
+    while(true){
+        bool connected = (LeddarPing( gHandle ) == LD_SUCCESS);
+        if(!connected) ping_fail++;
+        if(ping_fail >= 5) break;
+        LeddarSleep( 0.5 );
+    }
+
+    //MainMenu();
 
     LeddarDestroy( gHandle );
 

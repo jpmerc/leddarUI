@@ -22,6 +22,8 @@ public:
 
     void setData(QVector<double> *vec_x, QVector<double> *vec_y);
 
+    void updateViewRange(QVector<double> *range_data);
+
 
     Ui::MainWindow* getUI();
 
@@ -34,6 +36,9 @@ private:
 
     QTimer *dataRateTimer;
     double graph_update_frequency;
+
+    double plot_min_range;
+    double plot_max_range;
 
 
 private slots:
