@@ -99,7 +99,7 @@ void MainWindow::updateViewRange(QVector<double> *range_data){
         plot_max_range = max_view_range;
     }
 
-    // Mostly for when the range data becomes shorter than the plot range
+    // When the range data becomes shorter than the plot range
     else{
         double plotTopQuartile = 0.75 * plot_max_range;
         if(max_value < plotTopQuartile){

@@ -26,15 +26,11 @@
 // *****************************************************************************
 
 
-//CODE MODIFIED BY JEAN_PHILIPPE MERCIER, UNIVERSITE LAVAL
-
-
-//#include <ros/ros.h>
-//#include <sensor_msgs/LaserScan.h>
-//#include <angles/angles.h>
+//CODE MODIFIED BY JEAN-PHILIPPE MERCIER, UNIVERSITE LAVAL
 
 #include <stdio.h>
 #include <ctype.h>
+#include <ctime>
 #include <string.h>
 #include "LeddarC.h"
 #include "LeddarProperties.h"
@@ -59,11 +55,6 @@ static LeddarHandle gHandle=NULL;
 
 static MainWindow* w_;
 
-//sensor_msgs::LaserScan constructLeddarMessage(std::vector<double> data);
-//ros::Publisher leddar_publisher;
-//int leddar_sequence_number = 0;
-
-
 class leddarThread : public QThread
 {
 public:
@@ -85,8 +76,6 @@ leddarThread::leddarThread(MainWindow *in_w, QApplication *in_app){
 
 void leddarThread::run(){
 
-    gHandle = LeddarCreate();
-
     char lAddress[24];
     lAddress[0] = 0;
 
@@ -99,8 +88,8 @@ void leddarThread::run(){
            // ReadLiveData();
         }
     }
-    else
-    {
+
+    else{
         puts( "\nConnection failed!" );
     }
 
@@ -114,9 +103,6 @@ void leddarThread::run(){
         LeddarSleep( 0.5 );
     }
 
-    //MainMenu();
-
-    LeddarDestroy( gHandle );
 
     this->exit();
     app->exit();
@@ -736,39 +722,14 @@ int main(int argc, char** argv){
 
     w_->show();
 
-//    for(int j=0; j < 1000; j++){
-//        QVector<double> x(15), y(15);
-//        for(int i=0; i < 16; i++){
-//            x.push_back(i);
-//            if(i%3 == 0) y.push_back(j);
-//            else if(i%3 == 1) y.push_back(j);
-//            else y.push_back(j);
-//        }
-//        w_->setGraphData(&x, &y);
-//        usleep(1000);
-
-//    }
-
-//    QVector<double> x(15), y(15);
-//    for(int i=0; i < 16; i++){
-//        x.push_back(i);
-//        y.push_back(0);
-//    }
-//    w_->setGraphData(&x, &y);
-
+    gHandle = LeddarCreate();
     leddarThread leddar_thread(w_, &a);
     leddar_thread.start();
 
     a.exec();
     leddar_thread.exit();
 
-
-
-//    gHandle = LeddarCreate();
-
-//    MainMenu();
-
-//    LeddarDestroy( gHandle );
+    LeddarDestroy( gHandle );
 
     return 0;
 }
