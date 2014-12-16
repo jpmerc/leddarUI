@@ -138,8 +138,10 @@ void leddarThread::updateParameters(){
 }
 
 void leddarThread::setParameters(CONFIG_PARAMS param){
+    // sets the parameters of the leddar and starts the timer to stop the leddar when it is over for this set of parameter
 
-
+   // double timer_ms = param.LOOP_TIME * 1000;
+   // updateParametersTimer->start(timer_ms);
 }
 
 void leddarThread::run(){
@@ -151,9 +153,13 @@ void leddarThread::run(){
         if( LeddarGetConnected( gHandle ) ){
 
             // SET PARAMETERS
-            setParameters(params);
+            if(config_param_index < params.size() && params.size() > 0){
+                setParameters(params.at(config_param_index));
+                config_param_index++;
+            }
 
-            // START TIMERS AND CONNECT TO INTERRUPT FUNCTIONS (change parameters or filename)
+            // START TIMERS
+            updateParametersTimer->start(20*60*1000);
 
 
             startLeddar();
