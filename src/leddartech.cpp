@@ -41,14 +41,27 @@
 
 #include <QThread>
 #include <QMutex>
+#include <QTimer>
 
 
 #define ARRAY_LEN( a )  (sizeof(a)/sizeof(a[0]))
 
 static void MainMenu( void );
-static void ReadLiveData( void );
 static unsigned char DataCallback( void *aHandle, unsigned int aLevels );
 static void CheckError( int aCode );
+
+
+struct CONFIG_PARAMS {
+    double OVERSAMPLING_EXPONENT;
+    double ACCUMULATION_EXPONENT;
+    double BASE_POINT_COUNT;
+    double AUTOMATIC_LED_INTENSITY;
+    double LED_INTENSITY;
+    double CHANGE_DELAY;
+    double THRESHOLD_OFFSET;
+    double MEASUREMENT_RATE;
+    double LOOP_TIME;
+};
 
 // Global variable to avoid passing to each function.
 static LeddarHandle gHandle=NULL;
@@ -59,6 +72,14 @@ class leddarThread : public QThread
 {
 public:
     leddarThread(MainWindow *in_w, QApplication* in_app);
+    std::vector<CONFIG_PARAMS> loadParamsFromConfigFile();
+    std::string getSaveFileName();
+    void startLeddar();
+    void stopLeddar();
+    void changeSavingFile();
+    void updateParameters();
+    void setParameters(CONFIG_PARAMS param);
+
 
 protected:
     void run();
@@ -66,12 +87,59 @@ protected:
 private:
     MainWindow* w;
     QApplication* app;
+    QTimer *changeFileTimer;
+    QTimer *updateParametersTimer;
+    std::vector<CONFIG_PARAMS> params;
+    std::string config_file_path;
+    std::string save_file_path;
+    int config_param_index;
 
  };
 
 leddarThread::leddarThread(MainWindow *in_w, QApplication *in_app){
     w = in_w;
     app = in_app;
+
+    // Timers and their interrupt functions
+    changeFileTimer = new QTimer(this);
+    connect(this->changeFileTimer, SIGNAL(timeout()), this, SLOT(changeSavingFile()));
+    updateParametersTimer = new QTimer(this);
+    connect(this->updateParametersTimer, SIGNAL(timeout()), this, SLOT(updateParameters()));
+
+    // Set file paths
+    config_file_path = "../config.txt";
+    save_file_path = getSaveFileName();
+
+    // READ CONFIG FILE
+    params = loadParamsFromConfigFile();
+    config_param_index = 0;
+
+}
+
+
+std::vector<CONFIG_PARAMS> leddarThread::loadParamsFromConfigFile(){
+    // each line is transformed in CONFIG_PARAMS and pushed back in the returned vector
+
+}
+
+std::string leddarThread::getSaveFileName(){
+    // file name will be of the form : ../data/yyyy-mm-dd-hh-mm.txt
+
+}
+
+void leddarThread::changeSavingFile(){
+    // stops the leddar, closes the old file where data was saved, creates a new file and starts over the leddar
+
+}
+
+void leddarThread::updateParameters(){
+    // stops the leddar, get the parameters of the next config_param_index, sets the leddar parameters and starts over the leddar
+
+}
+
+void leddarThread::setParameters(CONFIG_PARAMS param){
+
+
 }
 
 void leddarThread::run(){
@@ -79,12 +147,16 @@ void leddarThread::run(){
     char lAddress[24];
     lAddress[0] = 0;
 
-    if ( LeddarConnect( gHandle, lAddress ) == LD_SUCCESS )
-    {
-        if( LeddarGetConnected( gHandle ) )
-        {
-            CheckError( LeddarStartDataTransfer( gHandle, LDDL_DETECTIONS ) );
-            CheckError( LeddarAddCallback( gHandle, DataCallback, gHandle ) );
+    if ( LeddarConnect( gHandle, lAddress ) == LD_SUCCESS ){
+        if( LeddarGetConnected( gHandle ) ){
+
+            // SET PARAMETERS
+            setParameters(params);
+
+            // START TIMERS AND CONNECT TO INTERRUPT FUNCTIONS (change parameters or filename)
+
+
+            startLeddar();
            // ReadLiveData();
         }
     }
@@ -92,6 +164,8 @@ void leddarThread::run(){
     else{
         puts( "\nConnection failed!" );
     }
+
+    //MainMenu();
 
 
     // LOOP PINGING THE SENSOR (ENDS THE PROGRAM IF NOT PINGABLE FOR A CERTAIN TIME)
@@ -107,6 +181,17 @@ void leddarThread::run(){
     this->exit();
     app->exit();
  }
+
+
+void leddarThread::startLeddar(){
+    CheckError( LeddarStartDataTransfer( gHandle, LDDL_DETECTIONS ) );
+    CheckError( LeddarAddCallback( gHandle, DataCallback, gHandle ) );
+}
+
+void leddarThread::stopLeddar(){
+    LeddarStopDataTransfer( gHandle );
+    LeddarRemoveCallback( gHandle, DataCallback, gHandle );
+}
 
 
 // *****************************************************************************
@@ -216,7 +301,22 @@ DataCallback( void *aHandle, unsigned int aLevels )
     w_->setData(&x_data, &y_data);
 
 
+    double lValue;
+    char   lValueStr[64];
     puts( "" );
+    puts( "\nCurrent Configuration:\n" );
+    CheckError( LeddarGetTextProperty( gHandle, PID_NAME, 0, lValueStr, sizeof(lValueStr) ) );
+    printf( "  Device Name     : %s\n", lValueStr );
+    CheckError( LeddarGetProperty( gHandle, PID_OVERSAMPLING, 0, &lValue ) );
+    printf( "  Oversampling    : %.0f\n", lValue );
+    CheckError( LeddarGetProperty( gHandle, PID_ACCUMULATION, 0, &lValue ) );
+    printf( "  Accumulations   : %.0f\n", lValue );
+    CheckError( LeddarGetProperty( gHandle, PID_BASE_POINT_COUNT, 0, &lValue ) );
+    printf( "  Base Point Count: %.0f\n", lValue );
+    CheckError( LeddarGetProperty( gHandle, PID_LED_INTENSITY, 0, &lValue ) );
+    printf( "  Led Intensity   : %.0f\n", lValue );
+    CheckError( LeddarGetProperty( gHandle, PID_THRESHOLD_OFFSET, 0, &lValue ) );
+    printf( "  Threshold offset: %.2f\n", lValue );
 
 //    sensor_msgs::LaserScan message = constructLeddarMessage(leddar_data);
 //    leddar_publisher.publish(message);
@@ -672,31 +772,6 @@ MainMenu( void )
 }
 
 
-//sensor_msgs::LaserScan constructLeddarMessage(std::vector<double> data){
-
-//    sensor_msgs::LaserScan scan_message;
-//    scan_message.header.frame_id    = "leddar_base_link";
-//    scan_message.header.stamp       = ros::Time::now();
-//    scan_message.header.seq         = leddar_sequence_number;
-//    scan_message.angle_min          = angles::from_degrees(-22.5);
-//    scan_message.angle_max          = angles::from_degrees(22.5);
-//    scan_message.angle_increment    = angles::from_degrees(45/16);
-//    scan_message.range_min          = 0;
-//    scan_message.range_max          = 50;
-
-//    std::cout << "Data size = " << data.size() << std::endl;
-
-//    for(int i=0; i < data.size() ; i++){
-//        scan_message.ranges.push_back(data.at(i));
-//    }
-
-//    std::cout << scan_message << std::endl;
-
-//    leddar_sequence_number++;
-
-//    return scan_message;
-//}
-
 // *****************************************************************************
 // Function: main
 //
@@ -709,11 +784,6 @@ int main(int argc, char** argv){
 //    ros::NodeHandle n;
 
 //    leddar_publisher = n.advertise<sensor_msgs::LaserScan>(std::string("leddar_scan"), 1);
-
-
-    puts( "*************************************************" );
-    puts( "* Welcome to the LeddarC Demonstration Program! *" );
-    puts( "*************************************************" );
 
 
     QApplication a(argc, argv);
