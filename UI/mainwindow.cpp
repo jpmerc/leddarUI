@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setGeometry(400, 250, 542, 390);
+    setGeometry(0, 0, 320, 240);
 
     addGraph(ui->customPlot);
 
@@ -53,6 +53,8 @@ void MainWindow::addGraph(QCustomPlot *customPlot)
     customPlot->xAxis->setAutoTickStep(false);
     customPlot->xAxis->setTickStep(1);
     customPlot->xAxis->setSubTickLength(0);
+    customPlot->xAxis->setTickLabelFont(QFont("Helvetica", 9));
+    customPlot->yAxis->setTickLabelFont(QFont("Helvetica", 9));
     customPlot->yAxis->setTicks(true);
     customPlot->xAxis->setTickLabels(true);
     customPlot->yAxis->setTickLabels(true);
@@ -163,6 +165,7 @@ void MainWindow::updateParametersLegend(QVector<double> data){
 
 
     title = new QCPPlotTitle(ui->customPlot, legend);
+    title->setFont(QFont("Helvetica", 9));
     ui->customPlot->plotLayout()->addElement(0, 0, title);
 
 
