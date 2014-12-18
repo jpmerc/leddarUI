@@ -35,8 +35,12 @@ endif(COMPILE_RASPBERRY_PI)
 include_directories(${LEDDARTECH_INCLUDE_DIRECTORY})
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/${LEDDARTECH_LIB_DIRECTORY})
 
+QT4_WRAP_CPP(MOCSrcs2 src/leddarThread.h)
+
 add_executable(leddartech_node 
-				src/leddartech.cpp 
+				src/leddartech.cpp
+				${MOCSrcs2}
+				src/leddarThread.h
 				${LEDDARTECH_INCLUDE_DIRECTORY}/LeddarC.h 
 				${LEDDARTECH_INCLUDE_DIRECTORY}/LeddarCommands.h 
 				${LEDDARTECH_INCLUDE_DIRECTORY}/LeddarProperties.h 

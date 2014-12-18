@@ -5,3 +5,4 @@ UI-build-desktop-Desktop_Qt_4_8_0_for_GCC__Qt_SDK__Release/
 build/*
 lib/libleddarUI.a
 CMakeLists.txt.user
+log/*

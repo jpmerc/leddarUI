@@ -1,39 +1,15 @@
-// *****************************************************************************
-// Module..: SDK -- Software development kit for Leddar products.
-//
-/// \file    Main.c
-///
-/// \brief   Simple console program demonstrating the use of LeddarC functions.
-///
-// Platform: Win32, Linux
-//
-// Copyright (c) 2013-2014 LeddarTech Inc. All rights reserved.
-// Information contained herein is or may be confidential and proprietary to
-// LeddarTech inc. Prior to using any part of the software development kit
-// accompanying this notice, you must accept and agree to be bound to the
-// terms of the LeddarTech Inc. license agreement accompanying this file.
-// *****************************************************************************
-
-// *****************************************************************************
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// ! WARNING !
-// ! To keep the example simple, scanf is used to input values and printf to
-// ! output. If you use non-ASCII characters for your paths, this may not work
-// ! correctly on all operating systems (for example Windows prefers to use
-// ! wchar_t for this). So in a real application you may have to use other
-// ! functions for I/O and conversion function to/from UTF-8.
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// *****************************************************************************
-
-
-//CODE MODIFIED BY JEAN-PHILIPPE MERCIER, UNIVERSITE LAVAL
+//CODE BY JEAN-PHILIPPE MERCIER, UNIVERSITE LAVAL
+//INSPIRED BY LEDDARTECH SDK EXAMPLE (http://www.leddartech.com/support/downloads/9-leddar-evaluation-kit)
 
 #include <stdio.h>
 #include <ctype.h>
 #include <ctime>
+#include <math.h>
+#include <iostream>
 #include <string.h>
 #include "LeddarC.h"
 #include "LeddarProperties.h"
+#include "LeddarResults.h"
 
 #include "UI/mainwindow.h"
 #include <QtGui/QApplication>
@@ -42,14 +18,11 @@
 #include <QThread>
 #include <QMutex>
 #include <QTimer>
+#include <QDir>
 
+#include "leddarThread.h"
 
 #define ARRAY_LEN( a )  (sizeof(a)/sizeof(a[0]))
-
-static void MainMenu( void );
-static unsigned char DataCallback( void *aHandle, unsigned int aLevels );
-static void CheckError( int aCode );
-
 
 struct CONFIG_PARAMS {
     double OVERSAMPLING_EXPONENT;
@@ -59,121 +32,41 @@ struct CONFIG_PARAMS {
     double LED_INTENSITY;
     double CHANGE_DELAY;
     double THRESHOLD_OFFSET;
-    double MEASUREMENT_RATE;
     double LOOP_TIME;
 };
 
+
+// Function declarations
+static unsigned char DataCallback( void *aHandle, unsigned int aLevels );
+static void CheckError( int aCode );
+static void startLeddarData();
+static void stopLeddarData();
+static void setupLeddar();
+QVector<CONFIG_PARAMS> readConfigurationFile(QFile *file);
+bool checkConfigVectorValidity(CONFIG_PARAMS param_set);
+static void setLeddarParameters(CONFIG_PARAMS param_set);
+static QString getLogFileName();
+
+
 // Global variable to avoid passing to each function.
 static LeddarHandle gHandle=NULL;
-
 static MainWindow* w_;
+static QVector<CONFIG_PARAMS> g_param_vector;
+static int g_param_vector_index;
+static QVector<double> x_data;
+static leddarTimer *round_robin_timer;
+static leddarTimer *log_file_timer;
+static QFile *LogFile = 0;
+static QMutex LogFileMutex;
 
-class leddarThread : public QThread
+leddarThread::leddarThread(MainWindow *in_w, QApplication *in_app, QObject *parent) :
+    QThread(parent)
 {
-public:
-    leddarThread(MainWindow *in_w, QApplication* in_app);
-    std::vector<CONFIG_PARAMS> loadParamsFromConfigFile();
-    std::string getSaveFileName();
-    void startLeddar();
-    void stopLeddar();
-    void changeSavingFile();
-    void updateParameters();
-    void setParameters(CONFIG_PARAMS param);
-
-
-protected:
-    void run();
-
-private:
-    MainWindow* w;
-    QApplication* app;
-    QTimer *changeFileTimer;
-    QTimer *updateParametersTimer;
-    std::vector<CONFIG_PARAMS> params;
-    std::string config_file_path;
-    std::string save_file_path;
-    int config_param_index;
-
- };
-
-leddarThread::leddarThread(MainWindow *in_w, QApplication *in_app){
     w = in_w;
     app = in_app;
-
-    // Timers and their interrupt functions
-    changeFileTimer = new QTimer(this);
-    connect(this->changeFileTimer, SIGNAL(timeout()), this, SLOT(changeSavingFile()));
-    updateParametersTimer = new QTimer(this);
-    connect(this->updateParametersTimer, SIGNAL(timeout()), this, SLOT(updateParameters()));
-
-    // Set file paths
-    config_file_path = "../config.txt";
-    save_file_path = getSaveFileName();
-
-    // READ CONFIG FILE
-    params = loadParamsFromConfigFile();
-    config_param_index = 0;
-
-}
-
-
-std::vector<CONFIG_PARAMS> leddarThread::loadParamsFromConfigFile(){
-    // each line is transformed in CONFIG_PARAMS and pushed back in the returned vector
-
-}
-
-std::string leddarThread::getSaveFileName(){
-    // file name will be of the form : ../data/yyyy-mm-dd-hh-mm.txt
-
-}
-
-void leddarThread::changeSavingFile(){
-    // stops the leddar, closes the old file where data was saved, creates a new file and starts over the leddar
-
-}
-
-void leddarThread::updateParameters(){
-    // stops the leddar, get the parameters of the next config_param_index, sets the leddar parameters and starts over the leddar
-
-}
-
-void leddarThread::setParameters(CONFIG_PARAMS param){
-    // sets the parameters of the leddar and starts the timer to stop the leddar when it is over for this set of parameter
-
-   // double timer_ms = param.LOOP_TIME * 1000;
-   // updateParametersTimer->start(timer_ms);
 }
 
 void leddarThread::run(){
-
-    char lAddress[24];
-    lAddress[0] = 0;
-
-    if ( LeddarConnect( gHandle, lAddress ) == LD_SUCCESS ){
-        if( LeddarGetConnected( gHandle ) ){
-
-            // SET PARAMETERS
-            if(config_param_index < params.size() && params.size() > 0){
-                setParameters(params.at(config_param_index));
-                config_param_index++;
-            }
-
-            // START TIMERS
-            updateParametersTimer->start(20*60*1000);
-
-
-            startLeddar();
-           // ReadLiveData();
-        }
-    }
-
-    else{
-        puts( "\nConnection failed!" );
-    }
-
-    //MainMenu();
-
-
     // LOOP PINGING THE SENSOR (ENDS THE PROGRAM IF NOT PINGABLE FOR A CERTAIN TIME)
     int ping_fail = 0;
     while(true){
@@ -183,20 +76,92 @@ void leddarThread::run(){
         LeddarSleep( 0.5 );
     }
 
+    std::cout << "The leddar has been disconnected. Program will shutdown!" << std::endl;
 
+    stopLeddarData();
     this->exit();
     app->exit();
- }
+
+}
+
+leddarTimer::leddarTimer(int timerNumber, QObject *parent) : QTimer(parent) {
+    if(timerNumber == 0){
+        connect(this, SIGNAL(timeout()), this, SLOT(RoundRobinSlot()));
+    }
+    else{
+        connect(this, SIGNAL(timeout()), this, SLOT(LogFileSlot()));
+    }
+}
+
+void leddarTimer::RoundRobinSlot() {
+  qDebug() << "Current date and time:" << QDateTime::currentDateTime().toString();
+  round_robin_timer->stop();
+
+  // increment g_param_vector_index or restart at the beggining if all parameters have been tested
+  int g_param_vector_size = g_param_vector.size();
+  g_param_vector_index++;
+  if(g_param_vector_index >= g_param_vector_size && g_param_vector_size > 0){
+      g_param_vector_index = 0;
+  }
+
+  CONFIG_PARAMS parameters = g_param_vector.at(g_param_vector_index);
+  setLeddarParameters(parameters);
+
+}
+
+void leddarTimer::LogFileSlot() {
+  qDebug() << "Current date and time:" << QDateTime::currentDateTime().toString();
+
+  LogFileMutex.lock();
+  LogFile->close();
+  LogFile = new QFile(getLogFileName());
+  LogFile->open(QIODevice::WriteOnly | QIODevice::Text);
+  LogFileMutex.unlock();
+
+}
+
+void printConfigParam(CONFIG_PARAMS config){
+
+    std::cout << std::endl;
+    std::cout << " OVERSAMPLING_EXPONENT : "    << config.OVERSAMPLING_EXPONENT     << std::endl;
+    std::cout << " ACCUMULATION_EXPONENT : "    << config.ACCUMULATION_EXPONENT     << std::endl;
+    std::cout << " BASE_POINT_COUNT : "         << config.BASE_POINT_COUNT          << std::endl;
+    std::cout << " AUTOMATIC_LED_INTENSITY : "  << config.AUTOMATIC_LED_INTENSITY   << std::endl;
+    std::cout << " LED_INTENSITY : "            << config.LED_INTENSITY             << std::endl;
+    std::cout << " CHANGE_DELAY : "             << config.CHANGE_DELAY              << std::endl;
+    std::cout << " THRESHOLD_OFFSET : "         << config.THRESHOLD_OFFSET          << std::endl;
+    std::cout << " EXECUTION TIME (s) : "       << config.LOOP_TIME                 << std::endl;
+    std::cout << std::endl;
+
+}
 
 
-void leddarThread::startLeddar(){
+static void startLeddarData(){
     CheckError( LeddarStartDataTransfer( gHandle, LDDL_DETECTIONS ) );
     CheckError( LeddarAddCallback( gHandle, DataCallback, gHandle ) );
 }
 
-void leddarThread::stopLeddar(){
+static void stopLeddarData(){
     LeddarStopDataTransfer( gHandle );
     LeddarRemoveCallback( gHandle, DataCallback, gHandle );
+}
+
+
+static void setupLeddar(){
+    gHandle = LeddarCreate();
+
+    char lAddress[24];
+    lAddress[0] = 0;
+
+    if ( LeddarConnect( gHandle, lAddress ) == LD_SUCCESS ){
+        if( LeddarGetConnected( gHandle ) ){
+            puts( "\nConnection established!" );
+        }
+    }
+
+    else{
+        puts( "\nConnection failed!" );
+    }
 }
 
 
@@ -221,37 +186,6 @@ CheckError( int aCode )
     }
 }
 
-// *****************************************************************************
-// Function: WaitKey
-//
-/// \brief   Wait for a key to be pressed on the keyboard, pinging the sensor
-///          to keep the connection alive while waiting.
-///
-/// \return  The character corresponding to the key pressed (converted to
-///          uppercase for letters).
-// *****************************************************************************
-
-static char
-WaitKey( void )
-{
-    // LeddarGetKey is blocking so we need to wait for a key to be pressed
-    // before calling it.
-    while( !LeddarKeyPressed() )
-    {
-        // If a live connection is active we need to ping it periodically.
-        if ( LeddarGetConnected( gHandle ) )
-        {
-            if ( LeddarPing( gHandle ) != LD_SUCCESS )
-            {
-                return 0;
-            }
-        }
-
-        LeddarSleep( 0.5 );
-    }
-
-    return toupper( LeddarGetKey() );
-}
 
 // *****************************************************************************
 // Function: DataCallback
@@ -272,6 +206,22 @@ DataCallback( void *aHandle, unsigned int aLevels )
 {
     LdDetection lDetections[50];
     unsigned int i, j, lCount = LeddarGetDetectionCount( aHandle );
+    //std::cout << std::endl << " lCount = " << lCount << std::endl;
+
+    // Loop to get wich segment has returned a distance
+    QVector<double> index_data;
+    double new_index[16] = {0};
+    double old_index[16] = {-1};
+    for(int i = 0; i < 16; i++){
+        LeddarGetResult(aHandle, 3, i, new_index);
+        if(new_index[0] != old_index[0]){
+            index_data.push_back(new_index[0]);
+            old_index[0] = new_index[0];
+        }
+        else{
+            break;
+        }
+    }
 
     if ( lCount > ARRAY_LEN( lDetections ) )
     {
@@ -280,503 +230,190 @@ DataCallback( void *aHandle, unsigned int aLevels )
 
     LeddarGetDetections( aHandle, lDetections, ARRAY_LEN( lDetections ) );
 
-    // When replaying a record, display the current index
-    if ( LeddarGetRecordSize( gHandle ) != 0 )
-    {
-        printf( "%6d ", LeddarGetCurrentRecordIndex( gHandle ) );
-    }
 
-
-    QVector<double> x_data;
-    QVector<double> y_data;
-
+    // Place the distance and amplitude at the good segment index
+    QVector<double> y_distance(QVector<double>(16));
+    QVector<double> y_amplitude(QVector<double>(16));
     for( i=0, j=0; (i<lCount) && (j<16); ++i )
     {
-        printf( "%5.2f ", lDetections[i].mDistance );
-        x_data.push_back(j);
-        y_data.push_back(lDetections[i].mDistance);
+        y_distance.replace(index_data.at(i),lDetections[i].mDistance);
+        y_amplitude.replace(index_data.at(i),lDetections[i].mAmplitude);
         ++j;
     }
 
-    int to_fill = 16 - x_data.size();
-    for(int i = 0; i < to_fill; i++){
-        x_data.push_back(0);
-        y_data.push_back(0);
+//    for(int i = 0; i < 16; i++){
+//        printf( "%5.2f ", y_distance.at(i) );
+//    }
+//    std::cout << std::endl;
+
+//    for(int i = 0; i < 16; i++){
+//        printf( "%5.2f ", y_amplitude.at(i) );
+//    }
+//    std::cout << std::endl;
+
+
+    // Send data to GUI
+    w_->setData(&x_data, &y_distance);
+
+
+    // Get the temperature of the sensor (celsius) and the LED intensity (useful if leddar is in automatic mode)
+    double temp_celsius[1] = {0};
+    double led_intensity[1] = {0};
+    LeddarGetResult(aHandle, 5, 0, temp_celsius);
+    LeddarGetResult(aHandle, 6, 0, led_intensity);
+
+//    std::cout << " Temperature = " << temp_celsius[0] << std::endl;
+//    std::cout << " LED intensity = " << led_intensity[0] << std::endl;
+
+
+    // ***************************************LOG DATA************************************************
+    LogFileMutex.lock();
+
+
+    if(LogFile && y_distance.size() > 0){
+
+        QTextStream out(LogFile);
+
+        //Write the distance
+        for(int i = 0; i < 16; i++){
+            out << y_distance.at(i) << ",";
+        }
+
+        //Write the amplitude
+        for(int i = 0; i < 16; i++){
+            out << y_amplitude.at(i) << ",";
+        }
+
+        // Write the parameters
+        CONFIG_PARAMS p = g_param_vector.at(g_param_vector_index);
+        out << p.OVERSAMPLING_EXPONENT << ",";
+        out << p.ACCUMULATION_EXPONENT << ",";
+        out << p.BASE_POINT_COUNT << ",";
+        out << p.AUTOMATIC_LED_INTENSITY << ",";
+        if(p.AUTOMATIC_LED_INTENSITY == 1){out << p.CHANGE_DELAY << ",";}
+        else{out << p.LED_INTENSITY << ",";}
+        out << p.THRESHOLD_OFFSET << ",";
+        out << p.LOOP_TIME << ",";
+
+        // Write Temperature and LED Intensity
+        out << temp_celsius[0] << ",";
+        out << led_intensity[0] << ",";
+        out << "\n";
     }
 
-    w_->setData(&x_data, &y_data);
-
-
-    double lValue;
-    char   lValueStr[64];
-    puts( "" );
-    puts( "\nCurrent Configuration:\n" );
-    CheckError( LeddarGetTextProperty( gHandle, PID_NAME, 0, lValueStr, sizeof(lValueStr) ) );
-    printf( "  Device Name     : %s\n", lValueStr );
-    CheckError( LeddarGetProperty( gHandle, PID_OVERSAMPLING, 0, &lValue ) );
-    printf( "  Oversampling    : %.0f\n", lValue );
-    CheckError( LeddarGetProperty( gHandle, PID_ACCUMULATION, 0, &lValue ) );
-    printf( "  Accumulations   : %.0f\n", lValue );
-    CheckError( LeddarGetProperty( gHandle, PID_BASE_POINT_COUNT, 0, &lValue ) );
-    printf( "  Base Point Count: %.0f\n", lValue );
-    CheckError( LeddarGetProperty( gHandle, PID_LED_INTENSITY, 0, &lValue ) );
-    printf( "  Led Intensity   : %.0f\n", lValue );
-    CheckError( LeddarGetProperty( gHandle, PID_THRESHOLD_OFFSET, 0, &lValue ) );
-    printf( "  Threshold offset: %.2f\n", lValue );
-
-//    sensor_msgs::LaserScan message = constructLeddarMessage(leddar_data);
-//    leddar_publisher.publish(message);
-
+    LogFileMutex.unlock();
 
     return 1;
 }
 
-// *****************************************************************************
-// Function: ReadLiveData
-//
-/// \brief   Start data transfer until a key is pressed and stop it (data is
-///          displayed by the callback).
-// *****************************************************************************
 
-static void
-ReadLiveData( void )
-{
-    puts( "\nPress a key to start reading data and press a key again to stop." );
-    WaitKey();
+QVector<CONFIG_PARAMS> readConfigurationFile(QFile *file){
 
-    CheckError( LeddarStartDataTransfer( gHandle, LDDL_DETECTIONS ) );
-    CheckError( LeddarAddCallback( gHandle, DataCallback, gHandle ) );
+    QVector<CONFIG_PARAMS> param_vector;
 
-    WaitKey();
+    file->open(QIODevice::ReadOnly | QIODevice::Text);
+    QTextStream in(file);
 
-    LeddarStopDataTransfer( gHandle );
-    LeddarRemoveCallback( gHandle, DataCallback, gHandle );
-}
+    while(!in.atEnd()) {
+        QString line = in.readLine();
+        line.remove(QString(" "));
+        line.remove(QString("\t"));
+        if(line.size() > 0 && line.at(0)!='#'){
+            QStringList list = line.split(",", QString::SkipEmptyParts);
+            int list_size = list.size();
+            if(list_size == 7){
+                CONFIG_PARAMS param_set;
+                param_set.OVERSAMPLING_EXPONENT     = trunc(list.at(0).toDouble());
+                param_set.ACCUMULATION_EXPONENT     = trunc(list.at(1).toDouble());
+                param_set.BASE_POINT_COUNT          = trunc(list.at(2).toDouble());
+                param_set.AUTOMATIC_LED_INTENSITY   = trunc(list.at(3).toDouble());
+                param_set.LED_INTENSITY             = trunc(list.at(4).toDouble()); //only one of them is used
+                param_set.CHANGE_DELAY              = trunc(list.at(4).toDouble()); //only one of them is used
+                param_set.THRESHOLD_OFFSET          = list.at(5).toDouble();
+                param_set.LOOP_TIME                 = list.at(6).toDouble();
 
-// *****************************************************************************
-// Function: ReplayData
-//
-/// \brief   Navigation through a record file to display the data (data is
-///          displayed by the callback).
-// *****************************************************************************
-
-static void
-ReplayData( void )
-{
-    puts( "\nP to go forward, O to go backward, H to return to beginning, Q to quit" );
-
-    CheckError( LeddarStartDataTransfer( gHandle, LDDL_DETECTIONS ) );
-    CheckError( LeddarAddCallback( gHandle, DataCallback, gHandle ) );
-
-    for(;;)
-    {
-        char lChoice = WaitKey();
-
-        switch( lChoice )
-        {
-            case 'H':
-                LeddarMoveRecordTo( gHandle, 0 );
-                break;
-            case 'O':
-                CheckError( LeddarStepBackward( gHandle ) );
-                break;
-            case 'P':
-                CheckError( LeddarStepForward( gHandle ) );
-                break;
-            case 'Q':
-            case  27: // Escape
-                LeddarStopDataTransfer( gHandle );
-                LeddarRemoveCallback( gHandle, DataCallback, gHandle );
-                return;
-        }
-    }
-}
-
-// *****************************************************************************
-// Function: ReadConfiguration
-//
-/// \brief   Display some parameters of the current configuration.
-// *****************************************************************************
-
-static void
-ReadConfiguration( void )
-{
-    double lValue;
-    char   lValueStr[64];
-
-    puts( "\nCurrent Configuration:\n" );
-    CheckError( LeddarGetTextProperty( gHandle, PID_NAME, 0, lValueStr, sizeof(lValueStr) ) );
-    printf( "  Device Name     : %s\n", lValueStr );
-    CheckError( LeddarGetProperty( gHandle, PID_OVERSAMPLING, 0, &lValue ) );
-    printf( "  Oversampling    : %.0f\n", lValue );
-    CheckError( LeddarGetProperty( gHandle, PID_ACCUMULATION, 0, &lValue ) );
-    printf( "  Accumulations   : %.0f\n", lValue );
-    CheckError( LeddarGetProperty( gHandle, PID_BASE_POINT_COUNT, 0, &lValue ) );
-    printf( "  Base Point Count: %.0f\n", lValue );
-    CheckError( LeddarGetProperty( gHandle, PID_LED_INTENSITY, 0, &lValue ) );
-    printf( "  Led Intensity   : %.0f\n", lValue );
-    CheckError( LeddarGetProperty( gHandle, PID_THRESHOLD_OFFSET, 0, &lValue ) );
-    printf( "  Threshold offset: %.2f\n", lValue );
-
-    puts( "\nPress a key to continue." );
-    WaitKey();
-}
-
-// *****************************************************************************
-// Function: ConfigurationMenu
-//
-/// \brief   Menu allowing the change of configuration parameters.
-// *****************************************************************************
-
-static void
-ConfigurationMenu( void )
-{
-    while( LeddarGetConnected( gHandle ) )
-    {
-        char         lChoice;
-        unsigned int lId = 0;
-        unsigned int lType = 1;
-
-        puts( "\nConfiguration Change Menu" );
-        puts( "  1. Change Oversampling Exponent" );
-        puts( "  2. Change Accumulation Exponent" );
-        puts( "  3. Change Base Point Count" );
-        puts( "  4. Change Led Intensity" );
-        puts( "  5. Change Threshold Offset" );
-        puts( "  6. Change Name" );
-        puts( "  7. Write" );
-        puts( "  8. Restore" );
-        puts( "  9. Quit" );
-
-        lChoice = WaitKey();
-
-        switch( lChoice )
-        {
-            case '1':
-                lId = PID_OVERSAMPLING_EXPONENT;
-                break;
-            case '2':
-                lId = PID_ACCUMULATION_EXPONENT;
-                break;
-            case '3':
-                lId = PID_BASE_POINT_COUNT;
-                break;
-            case '4':
-                lId = PID_LED_INTENSITY;
-                break;
-            case '5':
-                lId = PID_THRESHOLD_OFFSET;
-                break;
-            case '6':
-                lId = PID_NAME;
-                lType = 2;
-                break;
-            case '7':
-                CheckError( LeddarWriteConfiguration( gHandle ) );
-                break;
-            case '8':
-                CheckError( LeddarRestoreConfiguration( gHandle ) );
-                break;
-            case '9':
-            case  27: // Escape
-                if ( !LeddarGetConfigurationModified( gHandle ) )
-                {
-                    return;
+                bool valid_params = checkConfigVectorValidity(param_set);
+                if(valid_params){
+                    param_vector.push_back(param_set);
                 }
 
-                puts( "\n** Configuration modified, please Write or Restore before quitting **" );
-                break;
-        }
-
-        if ( lId != 0 )
-        {
-            printf( "\nEnter new value: " );
-
-            switch( lType )
-            {
-                case 1:
-                {
-                    double lValue;
-
-                    scanf( "%lf", &lValue );
-                    CheckError( LeddarSetProperty( gHandle, lId, 0, lValue ) );
+                else{
+                    std::cout << line.toAscii().data() <<"  :  Parameters are invalid! Please refer to config/config.txt for more information." << std::endl;
                 }
-                    break;
-                case 2:
-                {
-                    char lValue[64];
-
-                    scanf( "%63s", lValue );
-                    CheckError( LeddarSetTextProperty( gHandle, lId, 0, lValue ) );
-                }
-                    break;
             }
         }
     }
+
+    return param_vector;
 }
 
-// *****************************************************************************
-// Function: ConnectMenu
-//
-/// \brief   Main menu when a live connection is made.
-///
-/// \param   aTrySingleUsb  If true we will try to connect to a single USB
-///                         sensor by sending an empty string as the address.
-///                         This works only if there is 1 and only 1 USB sensor
-///                         plugged to the PC.
-// *****************************************************************************
+bool checkConfigVectorValidity(CONFIG_PARAMS param_set){
 
-static void
-ConnectMenu( int aTrySingleUsb )
-{
-    char lAddress[24];
+    //printConfigParam(param_set);
 
-    if ( aTrySingleUsb )
-    {
-        lAddress[0] = 0;
-    }
-    else
-    {
-        // Ask for address and try to connect before displaying menu.
-        printf( "\nEnter address: " );
-        scanf( "%24s", lAddress );
+    if(param_set.OVERSAMPLING_EXPONENT < 0 || param_set.OVERSAMPLING_EXPONENT > 3){
+        return false;
     }
 
-    if ( LeddarConnect( gHandle, lAddress ) == LD_SUCCESS )
-    {
-        while( LeddarGetConnected( gHandle ) )
-        {
-            char lChoice;
+    if(param_set.ACCUMULATION_EXPONENT < 0 || param_set.ACCUMULATION_EXPONENT > 10){
+        return false;
+    }
 
-            puts( "\n\nConnected Menu" );
-            puts( "  1. Read Data" );
-            puts( "  2. Read Configuration" );
-            puts( "  3. Change Configuration" );
-            if ( LeddarGetRecording( gHandle ) )
-            {
-                puts( "  4. Stop Recording" );
-            }
-            else
-            {
-                puts( "  4. Start Recording" );
-            }
-            puts( "  5. Disconnect" );
+    if(!(param_set.AUTOMATIC_LED_INTENSITY == 0 || param_set.AUTOMATIC_LED_INTENSITY == 1)){
+        return false;
+    }
 
-            lChoice = WaitKey();
-
-            switch( lChoice )
-            {
-                case '1':
-                    ReadLiveData();
-                    break;
-                case '2':
-                    ReadConfiguration();
-                    break;
-                case '3':
-                    ConfigurationMenu();
-                    break;
-                case '4':
-                    if ( LeddarGetRecording( gHandle ) )
-                    {
-                        LeddarStopRecording( gHandle );
-                    }
-                    else
-                    {
-                        CheckError( LeddarStartRecording( gHandle ) );
-                    }
-                    break;
-                case '5':
-                case  27:
-                    LeddarDisconnect( gHandle );
-                    return;
-            }
+    if(param_set.AUTOMATIC_LED_INTENSITY == 0){
+        if(param_set.LED_INTENSITY < 0 || param_set.LED_INTENSITY > 16){
+            return false;
         }
     }
-    else
-    {
-        puts( "\nConnection failed!" );
+
+    if(param_set.LOOP_TIME < 0){
+        return false;
     }
+
+
+    return true;
 }
 
-// *****************************************************************************
-// Function: ReplayMenu
-//
-/// \brief   Main menu when a replay a record file.
-// *****************************************************************************
+static void setLeddarParameters(CONFIG_PARAMS param_set){
 
-static void
-ReplayMenu( void )
-{
-    LtChar lName[256];
+    printConfigParam(param_set);
 
-    // Ask for file name and try to load record before display menu.
-    printf( "\nEnter file name: " );
-    LeddarScanf( LTS( "%255s" ), lName );
+    CheckError( LeddarSetProperty( gHandle, PID_OVERSAMPLING_EXPONENT, 0, param_set.OVERSAMPLING_EXPONENT ) );
+    CheckError( LeddarSetProperty( gHandle, PID_ACCUMULATION_EXPONENT, 0, param_set.ACCUMULATION_EXPONENT ) );
+    CheckError( LeddarSetProperty( gHandle, PID_BASE_POINT_COUNT, 0, param_set.BASE_POINT_COUNT ) );
+    CheckError( LeddarSetProperty( gHandle, PID_AUTOMATIC_LED_INTENSITY, 0, param_set.AUTOMATIC_LED_INTENSITY ) );
+    CheckError( LeddarSetProperty( gHandle, PID_THRESHOLD_OFFSET, 0, param_set.THRESHOLD_OFFSET ) );
 
-    if ( LeddarLoadRecord( gHandle, lName ) == LD_SUCCESS )
-    {
-        puts( "\nPlease wait while the record is loading..." );
-
-        // For a big file, especially if it is on a network drive, it may
-        // take a while before the replay is 100% ready. Note that you
-        // can still use the replay but it will not report the complete
-        // size until it is finished loading.
-        while( LeddarGetRecordLoading( gHandle ) )
-        {
-            LeddarSleep( 0.5 );
-        }
-
-        printf( "Finished loading record of %d frames.\n",
-                LeddarGetRecordSize( gHandle ) );
-
-        for(;;)
-        {
-            char lChoice;
-
-            puts( "\nReplay Menu" );
-            puts( "  1. Read Data" );
-            puts( "  2. Read Configuration" );
-            puts( "  3. Close" );
-
-            lChoice = WaitKey();
-
-            switch( lChoice )
-            {
-                case '1':
-                    ReplayData();
-                    break;
-                case '2':
-                    ReadConfiguration();
-                    break;
-                case '3':
-                case  27:
-                    LeddarDisconnect( gHandle );
-                    return;
-            }
-        }
+    if(param_set.AUTOMATIC_LED_INTENSITY == 1){
+        CheckError( LeddarSetProperty( gHandle, PID_CHANGE_DELAY, 0, param_set.CHANGE_DELAY ) );
     }
-    else
-    {
-        puts( "\nFailed to load file!" );
+    else{
+        CheckError( LeddarSetProperty( gHandle, PID_LED_INTENSITY, 0, param_set.LED_INTENSITY ) );
     }
+
+    // Save Modifications
+    CheckError( LeddarWriteConfiguration( gHandle ) );
+
+    // Configure timer
+    round_robin_timer->start(1000*param_set.LOOP_TIME);
+
 }
 
-// *****************************************************************************
-// Function: ConfigureRecordingMenu
-//
-/// \brief   Menu allowing for configuration of data recording.
-// *****************************************************************************
-
-static void
-ConfigureRecordingMenu( void )
-{
-    for(;;)
-    {
-        int    lChoice;
-        LtChar lPath[256];
-
-        puts( "\nConfigure Recording Menu" );
-        LeddarGetRecordingDirectory( lPath, ARRAY_LEN(lPath) );
-        LeddarPrintf( LTS( "  1. Change directory (%s)\n" ), lPath );
-        printf( "  2. Change max file size (%dMB)\n", LeddarGetMaxRecordFileSize() );
-        puts( "  3. Quit" );
-
-        lChoice = toupper( LeddarGetKey() );
-
-        switch( lChoice )
-        {
-            case '1':
-                printf( "\nEnter recording directory: " );
-                LeddarScanf( LTS( "%255s" ), lPath );
-                LeddarConfigureRecording( lPath, 0, 0 );
-                break;
-            case '2':
-                printf( "\nEnter max file size in MB: " );
-                scanf( "%d", &lChoice );
-                LeddarConfigureRecording( NULL, lChoice, 0 );
-                break;
-            case '3':
-            case  27:
-                return;
-        }
+static QString getLogFileName(){
+    // file name will be of the form : ../log/yyyy-mm-dd-hh-mm.txt
+    if(!QDir("../log/").exists()){
+        QDir().mkdir("../log/");
     }
+    QDateTime date_time;
+    QString date_time_string = date_time.currentDateTime().toString("yyyy-MM-dd-hh-mm-ss");
+    date_time_string.prepend("../log/");
+    date_time_string.append(".txt");
+    std::cout << "Writing to file : " << date_time_string.toAscii().data() << std::endl;
+    return date_time_string;
 }
-
-// *****************************************************************************
-// Function: ListSensors
-//
-/// \brief   List the address of all sensors available.
-// *****************************************************************************
-
-static void
-ListSensors( void )
-{
-    char         lAddresses[256];
-    unsigned int lCount = sizeof(lAddresses);
-    unsigned int lIndex = 0;
-
-    puts( "\nScanning for available sensors, please wait..." );
-
-    CheckError( LeddarListSensors( lAddresses, &lCount, 2000 ) );
-
-    printf( "Found %d sensors\n", lCount );
-
-    while( strlen( lAddresses+lIndex ) > 0 )
-    {
-        printf( "%s\n", lAddresses + lIndex );
-        lIndex += strlen( lAddresses+lIndex ) + 1;
-    }
-}
-
-// *****************************************************************************
-// Function: MainMenu
-//
-/// \brief   Display and responds to the main menu.
-// *****************************************************************************
-
-static void
-MainMenu( void )
-{
-    for(;;)
-    {
-        int lChoice;
-
-        puts( "\n\nMain Menu" );
-        puts( "  1. Connect" );
-        puts( "  2. Connect to single USB sensor" );
-        puts( "  3. List Sensors" );
-        puts( "  4. Replay Record" );
-        puts( "  5. Configure Recording" );
-        puts( "  6. Quit" );
-
-        lChoice = toupper( LeddarGetKey() );
-
-        switch( lChoice )
-        {
-            case '1':
-                ConnectMenu( 0 );
-                break;
-            case '2':
-                ConnectMenu( 1 );
-                break;
-            case '3':
-                ListSensors();
-                break;
-            case '4':
-                ReplayMenu();
-                break;
-            case '5':
-                ConfigureRecordingMenu();
-                break;
-            case '6':
-            case 'Q':
-            case  27:
-                puts( "\n*** Goodbye! ***" );
-                return;
-        }
-    }
-}
-
 
 // *****************************************************************************
 // Function: main
@@ -786,28 +423,49 @@ MainMenu( void )
 
 int main(int argc, char** argv){
 
-//    ros::init (argc, argv, "leddartech_node");
-//    ros::NodeHandle n;
-
-//    leddar_publisher = n.advertise<sensor_msgs::LaserScan>(std::string("leddar_scan"), 1);
-
-
     QApplication a(argc, argv);
     //MainWindow w;
     w_ = new MainWindow();
 
     w_->show();
 
-    gHandle = LeddarCreate();
-    leddarThread leddar_thread(w_, &a);
-    leddar_thread.start();
+    // Initialize vector
+    for(int i = 0; i < 16; i++){
+         x_data.push_back(i);
+    }
+
+    // READ CONFIG FILE
+    QFile configFile("../config/config.txt");
+    g_param_vector = readConfigurationFile(&configFile);
+    g_param_vector_index = 0;
+
+    if(g_param_vector.size() <= 0){
+        return 0;
+    }
+
+    // CONNECT LEDDAR AND REGISTER CALLBACK FUNCTION
+    setupLeddar();
+    startLeddarData();
+
+    // SET TIMERS AND PARAMETERS
+    round_robin_timer = new leddarTimer(0);
+    CONFIG_PARAMS initial_parameters = g_param_vector.at(g_param_vector_index);
+    setLeddarParameters(initial_parameters);
+    //config_round_robin_timer = new QTimer(&a);
+    //config_round_robin_timer->start(100);
+
+    // SET LOG FILE AND TIMER TO CHANGE LOG FILE EVERY 20 MINUTES
+    log_file_timer = new leddarTimer(1);
+    log_file_timer->start(1000*60*20);
+    LogFile = new QFile(getLogFileName());
+    LogFile->open(QIODevice::WriteOnly | QIODevice::Text);
 
     a.exec();
-    leddar_thread.exit();
 
+    stopLeddarData();
     LeddarDestroy( gHandle );
 
     return 0;
 }
 
-// End of file Main.c
+

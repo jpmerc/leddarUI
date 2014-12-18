@@ -9,10 +9,10 @@
 # 	AUTOMATIC_LED_INTENSITY 		: {0,1}		 
 # 	LED_INTENSITY | CHANGE_DELAY 	: [0-16] | .. (AUTOMATIC_LED_INTENSITY=0 | AUTOMATIC_LED_INTENSITY=1)
 # 	THRESHOLD_OFFSET				: ..
-# 	MEASUREMENT_RATE 				: {1.5625, 3.125, 6.25, 12.5, 25, 50}
 # 	TIME (s)						: ..
 #
-# The parameters are set in the order presented above. Here is an example :
-# 	2,7,20,0,16,0,12.5,120
+# The parameters are set in the order presented above. Here is an example presenting the default parameters:
+# 	3,8,20,0,12,0,120
 
-
+3,8,20,0,12,0,10
+3,8,20,0,4,0,10
