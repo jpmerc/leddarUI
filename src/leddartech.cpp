@@ -385,17 +385,32 @@ static void setLeddarParameters(CONFIG_PARAMS param_set){
     CheckError( LeddarSetProperty( gHandle, PID_ACCUMULATION_EXPONENT, 0, param_set.ACCUMULATION_EXPONENT ) );
     CheckError( LeddarSetProperty( gHandle, PID_BASE_POINT_COUNT, 0, param_set.BASE_POINT_COUNT ) );
     CheckError( LeddarSetProperty( gHandle, PID_AUTOMATIC_LED_INTENSITY, 0, param_set.AUTOMATIC_LED_INTENSITY ) );
-    CheckError( LeddarSetProperty( gHandle, PID_THRESHOLD_OFFSET, 0, param_set.THRESHOLD_OFFSET ) );
+
+
+    // For updating the legend in the GUI
+    QVector<double> parameter_legend;
+    parameter_legend.push_back(param_set.OVERSAMPLING_EXPONENT);
+    parameter_legend.push_back(param_set.ACCUMULATION_EXPONENT);
+    parameter_legend.push_back(param_set.BASE_POINT_COUNT);
+    parameter_legend.push_back(param_set.AUTOMATIC_LED_INTENSITY);
 
     if(param_set.AUTOMATIC_LED_INTENSITY == 1){
         CheckError( LeddarSetProperty( gHandle, PID_CHANGE_DELAY, 0, param_set.CHANGE_DELAY ) );
+        parameter_legend.push_back(param_set.CHANGE_DELAY);
     }
     else{
         CheckError( LeddarSetProperty( gHandle, PID_LED_INTENSITY, 0, param_set.LED_INTENSITY ) );
+        parameter_legend.push_back(param_set.LED_INTENSITY);
     }
+
+    CheckError( LeddarSetProperty( gHandle, PID_THRESHOLD_OFFSET, 0, param_set.THRESHOLD_OFFSET ) );
+    parameter_legend.push_back(param_set.THRESHOLD_OFFSET);
 
     // Save Modifications
     CheckError( LeddarWriteConfiguration( gHandle ) );
+
+    parameter_legend.push_back(param_set.LOOP_TIME);
+    w_->updateParametersLegend(parameter_legend);
 
     // Configure timer
     round_robin_timer->start(1000*param_set.LOOP_TIME);

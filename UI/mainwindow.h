@@ -24,6 +24,7 @@ public:
 
     void updateViewRange(QVector<double> *range_data);
 
+    void updateParametersLegend(QVector<double> data);
 
     Ui::MainWindow* getUI();
 
@@ -40,6 +41,7 @@ private:
     double plot_min_range;
     double plot_max_range;
 
+    QCPPlotTitle *title;
 
 private slots:
     void refreshGraphData();

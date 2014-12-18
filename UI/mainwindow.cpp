@@ -5,6 +5,7 @@
 #include <QScreen>
 #include <QMessageBox>
 #include <QMetaEnum>
+#include <QLabel>
 #include <iostream>
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -26,6 +27,8 @@ MainWindow::MainWindow(QWidget *parent) :
     dataRateTimer->start( 1000 / graph_update_frequency );
     connect(this->dataRateTimer, SIGNAL(timeout()), this, SLOT(refreshGraphData()));
 
+
+
 }
 
 MainWindow::~MainWindow()
@@ -43,16 +46,33 @@ void MainWindow::addGraph(QCustomPlot *customPlot)
     customPlot->graph()->setPen(pen);
     customPlot->graph()->setName("lsStepCenter");
     customPlot->graph()->setLineStyle(QCPGraph::lsStepCenter);
-    customPlot->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 5));
+    customPlot->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, 5));
     customPlot->yAxis->setRange(plot_min_range, plot_max_range);
-    customPlot->xAxis->setRange(0, 16);
-    customPlot->xAxis->setTicks(false);
+    customPlot->xAxis->setRange(0, 15);
+    customPlot->xAxis->setTicks(true);
+    customPlot->xAxis->setAutoTickStep(false);
+    customPlot->xAxis->setTickStep(1);
+    customPlot->xAxis->setSubTickLength(0);
     customPlot->yAxis->setTicks(true);
-    customPlot->xAxis->setTickLabels(false);
+    customPlot->xAxis->setTickLabels(true);
     customPlot->yAxis->setTickLabels(true);
+    //customPlot->yAxis->setLabel("Distance (m)");
+    //customPlot->yAxis->setLabelPadding(0);
     customPlot->axisRect()->setupFullAxesBox();
-    customPlot->legend->setVisible(true);
-    customPlot->legend->setFont(QFont("Helvetica", 9));
+
+    customPlot->plotLayout()->insertRow(0);
+    title = new QCPPlotTitle(customPlot, "Graph");
+    customPlot->plotLayout()->addElement(0, 0, title);
+
+
+//    QCPItemText *textLabel = new QCPItemText(customPlot);
+//    customPlot->addItem(textLabel);
+//    textLabel->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
+//    textLabel->position->setType(QCPItemPosition::ptAxisRectRatio);
+//    textLabel->position->setCoords(0.5, 0); // place position at center/top of axis rect
+//    textLabel->setText("Text Item Demo");
+//    textLabel->setFont(QFont(font().family(), 16)); // make font a bit larger
+//    textLabel->setPen(QPen(Qt::black)); // show black border around text
 
     //customPlot->replot(QCustomPlot::rpImmediate);
 }
@@ -106,6 +126,47 @@ void MainWindow::updateViewRange(QVector<double> *range_data){
              plot_max_range = max_view_range;
         }
     }
+
+}
+
+void MainWindow::updateParametersLegend(QVector<double> data){
+    ui->customPlot->plotLayout()->remove(title);
+
+    QString legend("");
+
+    legend.push_back("Over:");
+    legend.push_back(QString::number(data.at(0)));
+
+    legend.push_back(" Acc:");
+    legend.push_back(QString::number(data.at(1)));
+
+    legend.push_back(" Count:");
+    legend.push_back(QString::number(data.at(2)));
+
+    legend.push_back(" Auto:");
+    legend.push_back(QString::number(data.at(3)));
+
+    if(data.at(3) == 1){
+        legend.push_back(" Del:");
+    }
+    else{
+        legend.push_back(" Int:");
+    }
+    legend.push_back(QString::number(data.at(4)));
+
+    legend.push_back(" Thr:");
+    legend.push_back(QString::number(data.at(5)));
+
+    legend.push_back(" t:");
+    legend.push_back(QString::number(data.at(6)));
+
+
+
+    title = new QCPPlotTitle(ui->customPlot, legend);
+    ui->customPlot->plotLayout()->addElement(0, 0, title);
+
+
+
 
 }
 
