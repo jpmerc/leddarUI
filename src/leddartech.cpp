@@ -274,6 +274,11 @@ DataCallback( void *aHandle, unsigned int aLevels )
 
         QTextStream out(LogFile);
 
+        // Write the time the data was logged
+        QDateTime date_time;
+        QString date_time_string = date_time.currentDateTime().toString("yyyy-MM-dd-hh-mm-ss-zzz");
+        out << date_time_string << ",";
+
         //Write the distance
         for(int i = 0; i < 16; i++){
             out << y_distance.at(i) << ",";

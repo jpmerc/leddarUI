@@ -28,6 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this->dataRateTimer, SIGNAL(timeout()), this, SLOT(refreshGraphData()));
 
 
+    setWindowTitle("Leddar Underwater Tests");
 
 }
 
@@ -44,7 +45,7 @@ void MainWindow::addGraph(QCustomPlot *customPlot)
     QPen pen;
     customPlot->addGraph();
     customPlot->graph()->setPen(pen);
-    customPlot->graph()->setName("lsStepCenter");
+    //customPlot->graph()->setName("lsStepCenter");
     customPlot->graph()->setLineStyle(QCPGraph::lsStepCenter);
     customPlot->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, 5));
     customPlot->yAxis->setRange(plot_min_range, plot_max_range);
@@ -63,8 +64,10 @@ void MainWindow::addGraph(QCustomPlot *customPlot)
     customPlot->axisRect()->setupFullAxesBox();
 
     customPlot->plotLayout()->insertRow(0);
-    title = new QCPPlotTitle(customPlot, "Graph");
+    title = new QCPPlotTitle(customPlot, "");
     customPlot->plotLayout()->addElement(0, 0, title);
+
+
 
 
 //    QCPItemText *textLabel = new QCPItemText(customPlot);
@@ -167,9 +170,6 @@ void MainWindow::updateParametersLegend(QVector<double> data){
     title = new QCPPlotTitle(ui->customPlot, legend);
     title->setFont(QFont("Helvetica", 9));
     ui->customPlot->plotLayout()->addElement(0, 0, title);
-
-
-
 
 }
 
