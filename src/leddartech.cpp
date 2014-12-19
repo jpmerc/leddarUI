@@ -122,7 +122,7 @@ void leddarTimer::pingLeddar() {
         //sleep(1);
         //setupLeddar();
         //startLeddarData();
-        CheckError( LeddarStartDataTransfer( gHandle, LDDL_DETECTIONS ) );
+        LeddarStartDataTransfer(gHandle, LDDL_DETECTIONS);
     }
     data_callback_called = 0;
     data_callback_called_mutex.unlock();
