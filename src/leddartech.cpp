@@ -118,10 +118,11 @@ void leddarTimer::pingLeddar() {
         std::cout << "The callback is not responding." << std::endl;
         std::cout << "Restarting the leddar..." << std::endl;
         //stopLeddarData();
-        LeddarDestroy( gHandle );
-        sleep(1);
-        setupLeddar();
-        startLeddarData();
+        //LeddarDestroy( gHandle );
+        //sleep(1);
+        //setupLeddar();
+        //startLeddarData();
+        CheckError( LeddarStartDataTransfer( gHandle, LDDL_DETECTIONS ) );
     }
     data_callback_called = 0;
     data_callback_called_mutex.unlock();
