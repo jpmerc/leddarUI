@@ -13,7 +13,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setGeometry(5, 5, 310, 230);
+    //setGeometry(5, 20, 310, 220);
+    setGeometry(5, 20, 310, 220);
 
     addGraph(ui->customPlot);
 

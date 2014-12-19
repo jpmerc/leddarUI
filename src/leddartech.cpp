@@ -117,7 +117,7 @@ void leddarTimer::pingLeddar() {
     if(data_callback_called == 0){
         std::cout << "The callback is not responding." << std::endl;
         std::cout << "Restarting the leddar..." << std::endl;
-        stopLeddarData();
+        //stopLeddarData();
         LeddarDestroy( gHandle );
         sleep(1);
         setupLeddar();
