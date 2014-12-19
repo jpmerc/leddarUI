@@ -143,6 +143,7 @@ void leddarTimer::pingLeddar() {
         std::cout << "Restarting the leddar..." << std::endl;
         stopLeddarData();
         LeddarDestroy( gHandle );
+        sleep(1);
         setupLeddar();
         startLeddarData();
     }
@@ -527,7 +528,7 @@ int main(int argc, char** argv){
 
 
     leddarTimer *ping_timer = new leddarTimer(2);
-    ping_timer->start(1000);
+    ping_timer->start(1000*3);
 
     a.exec();
 
