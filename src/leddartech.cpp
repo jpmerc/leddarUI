@@ -137,6 +137,7 @@ void leddarTimer::pingLeddar() {
     std::cout << "Leddar Connected Status = " << connected2 << std::endl;
 
     data_callback_called_mutex.lock();
+    std::cout << "data_callback_value (pingLeddar) = " << data_callback_called << std::endl;
     if(data_callback_called == 0){
         std::cout << "The callback is not responding." << std::endl;
         std::cout << "Restarting the leddar..." << std::endl;
@@ -235,8 +236,10 @@ CheckError( int aCode )
 static unsigned char
 DataCallback( void *aHandle, unsigned int aLevels )
 {
+
     data_callback_called_mutex.lock();
     data_callback_called++;
+    std::cout << "data_callback_value (dataCallback) = " << data_callback_called << std::endl;
     data_callback_called_mutex.unlock();
 
     LdDetection lDetections[50];
