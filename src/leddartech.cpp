@@ -42,10 +42,11 @@ static void CheckError( int aCode );
 static void startLeddarData();
 static void stopLeddarData();
 static void setupLeddar();
-QVector<CONFIG_PARAMS> readConfigurationFile(QFile *file);
-bool checkConfigVectorValidity(CONFIG_PARAMS param_set);
+static QVector<CONFIG_PARAMS> readConfigurationFile(QFile *file);
+static bool checkConfigVectorValidity(CONFIG_PARAMS param_set);
 static void setLeddarParameters(CONFIG_PARAMS param_set);
 static QString getLogFileName();
+static void printConfigParam(CONFIG_PARAMS config);
 
 
 // Global variable to avoid passing to each function.
@@ -58,6 +59,8 @@ static leddarTimer *round_robin_timer;
 static leddarTimer *log_file_timer;
 static QFile *LogFile = 0;
 static QMutex LogFileMutex;
+static int data_callback_called = 0;
+static QMutex data_callback_called_mutex;
 
 leddarThread::leddarThread(MainWindow *in_w, QApplication *in_app, QObject *parent) :
     QThread(parent)
@@ -92,49 +95,63 @@ leddarTimer::leddarTimer(int timerNumber, QObject *parent) : QTimer(parent) {
     else if(timerNumber == 1){
         connect(this, SIGNAL(timeout()), this, SLOT(LogFileSlot()));
     }
+
     else{
         connect(this, SIGNAL(timeout()), this, SLOT(pingLeddar()));
     }
 }
 
 void leddarTimer::RoundRobinSlot() {
-  qDebug() << "Current date and time:" << QDateTime::currentDateTime().toString();
-  round_robin_timer->stop();
+    qDebug() << "Current date and time:" << QDateTime::currentDateTime().toString();
+    round_robin_timer->stop();
 
-  // increment g_param_vector_index or restart at the beggining if all parameters have been tested
-  int g_param_vector_size = g_param_vector.size();
-  g_param_vector_index++;
-  if(g_param_vector_index >= g_param_vector_size && g_param_vector_size > 0){
-      g_param_vector_index = 0;
-  }
+    // increment g_param_vector_index or restart at the beggining if all parameters have been tested
+    int g_param_vector_size = g_param_vector.size();
+    g_param_vector_index++;
+    if(g_param_vector_index >= g_param_vector_size && g_param_vector_size > 0){
+        g_param_vector_index = 0;
+    }
 
-  CONFIG_PARAMS parameters = g_param_vector.at(g_param_vector_index);
-  setLeddarParameters(parameters);
+    CONFIG_PARAMS parameters = g_param_vector.at(g_param_vector_index);
+    setLeddarParameters(parameters);
 
 }
 
 void leddarTimer::LogFileSlot() {
-  qDebug() << "Current date and time:" << QDateTime::currentDateTime().toString();
+    qDebug() << "Current date and time:" << QDateTime::currentDateTime().toString();
 
-  LogFileMutex.lock();
-  LogFile->close();
-  LogFile = new QFile(getLogFileName());
-  LogFile->open(QIODevice::WriteOnly | QIODevice::Text);
-  LogFileMutex.unlock();
+    LogFileMutex.lock();
+    LogFile->close();
+    LogFile = new QFile(getLogFileName());
+    LogFile->open(QIODevice::WriteOnly | QIODevice::Text);
+    LogFileMutex.unlock();
 
 }
 
 void leddarTimer::pingLeddar() {
-  qDebug() << "Current date and time:" << QDateTime::currentDateTime().toString();
-  bool connected = (LeddarPing( gHandle ) == LD_SUCCESS);
-  std::cout << "Leddar Ping Status = " << connected;
+    //qDebug() << "Current date and time:" << QDateTime::currentDateTime().toString();
+    bool connected = (LeddarPing( gHandle ) == LD_SUCCESS);
+    std::cout << "Leddar Ping Status = " << connected << std::endl;
 
-  bool connected2 = LeddarGetConnected(gHandle);
-  std::cout << "Leddar Connected Status = " << connected2;
+    bool connected2 = LeddarGetConnected(gHandle);
+    std::cout << "Leddar Connected Status = " << connected2 << std::endl;
+
+    data_callback_called_mutex.lock();
+    if(data_callback_called == 0){
+        std::cout << "The callback is not responding." << std::endl;
+        std::cout << "Restarting the leddar..." << std::endl;
+        stopLeddarData();
+        LeddarDestroy( gHandle );
+        setupLeddar();
+        startLeddarData();
+        data_callback_called = 0;
+    }
+    data_callback_called_mutex.unlock()
+
 
 }
 
-void printConfigParam(CONFIG_PARAMS config){
+static void printConfigParam(CONFIG_PARAMS config){
 
     std::cout << std::endl;
     std::cout << " OVERSAMPLING_EXPONENT : "    << config.OVERSAMPLING_EXPONENT     << std::endl;
@@ -218,6 +235,10 @@ CheckError( int aCode )
 static unsigned char
 DataCallback( void *aHandle, unsigned int aLevels )
 {
+    data_callback_called_mutex.lock();
+    data_callback_called++;
+    data_callback_called_mutex.unlock();
+
     LdDetection lDetections[50];
     unsigned int i, j, lCount = LeddarGetDetectionCount( aHandle );
     //std::cout << std::endl << " lCount = " << lCount << std::endl;
@@ -255,15 +276,15 @@ DataCallback( void *aHandle, unsigned int aLevels )
         ++j;
     }
 
-//    for(int i = 0; i < 16; i++){
-//        printf( "%5.2f ", y_distance.at(i) );
-//    }
-//    std::cout << std::endl;
+    //    for(int i = 0; i < 16; i++){
+    //        printf( "%5.2f ", y_distance.at(i) );
+    //    }
+    //    std::cout << std::endl;
 
-//    for(int i = 0; i < 16; i++){
-//        printf( "%5.2f ", y_amplitude.at(i) );
-//    }
-//    std::cout << std::endl;
+    //    for(int i = 0; i < 16; i++){
+    //        printf( "%5.2f ", y_amplitude.at(i) );
+    //    }
+    //    std::cout << std::endl;
 
 
     // Send data to GUI
@@ -276,8 +297,8 @@ DataCallback( void *aHandle, unsigned int aLevels )
     LeddarGetResult(aHandle, 5, 0, temp_celsius);
     LeddarGetResult(aHandle, 6, 0, led_intensity);
 
-//    std::cout << " Temperature = " << temp_celsius[0] << std::endl;
-//    std::cout << " LED intensity = " << led_intensity[0] << std::endl;
+    //    std::cout << " Temperature = " << temp_celsius[0] << std::endl;
+    //    std::cout << " LED intensity = " << led_intensity[0] << std::endl;
 
 
     // ***************************************LOG DATA************************************************
@@ -331,7 +352,7 @@ DataCallback( void *aHandle, unsigned int aLevels )
 }
 
 
-QVector<CONFIG_PARAMS> readConfigurationFile(QFile *file){
+static QVector<CONFIG_PARAMS> readConfigurationFile(QFile *file){
 
     QVector<CONFIG_PARAMS> param_vector;
 
@@ -371,7 +392,7 @@ QVector<CONFIG_PARAMS> readConfigurationFile(QFile *file){
     return param_vector;
 }
 
-bool checkConfigVectorValidity(CONFIG_PARAMS param_set){
+static bool checkConfigVectorValidity(CONFIG_PARAMS param_set){
 
     //printConfigParam(param_set);
 
@@ -436,6 +457,8 @@ static void setLeddarParameters(CONFIG_PARAMS param_set){
     parameter_legend.push_back(param_set.LOOP_TIME);
     w_->updateParametersLegend(parameter_legend);
 
+
+
     // Configure timer
     round_robin_timer->start(1000*param_set.LOOP_TIME);
 
@@ -470,7 +493,7 @@ int main(int argc, char** argv){
 
     // Initialize vector
     for(int i = 0; i < 16; i++){
-         x_data.push_back(i);
+        x_data.push_back(i);
     }
 
     // READ CONFIG FILE
@@ -501,7 +524,7 @@ int main(int argc, char** argv){
 
 
     leddarTimer *ping_timer = new leddarTimer(2);
-    ping_timer->start(1000 * 0.5);
+    ping_timer->start(1000);
 
     a.exec();
 
