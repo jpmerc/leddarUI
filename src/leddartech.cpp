@@ -62,30 +62,6 @@ static QMutex LogFileMutex;
 static int data_callback_called = 0;
 static QMutex data_callback_called_mutex;
 
-leddarThread::leddarThread(MainWindow *in_w, QApplication *in_app, QObject *parent) :
-    QThread(parent)
-{
-    w = in_w;
-    app = in_app;
-}
-
-void leddarThread::run(){
-    // LOOP PINGING THE SENSOR (ENDS THE PROGRAM IF NOT PINGABLE FOR A CERTAIN TIME)
-    int ping_fail = 0;
-    while(true){
-        bool connected = (LeddarPing( gHandle ) == LD_SUCCESS);
-        if(!connected) ping_fail++;
-        if(ping_fail >= 5) break;
-        LeddarSleep( 0.5 );
-    }
-
-    std::cout << "The leddar has been disconnected. Program will shutdown!" << std::endl;
-
-    stopLeddarData();
-    this->exit();
-    app->exit();
-
-}
 
 leddarTimer::leddarTimer(int timerNumber, QObject *parent) : QTimer(parent) {
     if(timerNumber == 0){
@@ -181,19 +157,26 @@ static void stopLeddarData(){
 
 
 static void setupLeddar(){
-    gHandle = LeddarCreate();
 
-    char lAddress[24];
-    lAddress[0] = 0;
+    bool connected = false;
 
-    if ( LeddarConnect( gHandle, lAddress ) == LD_SUCCESS ){
-        if( LeddarGetConnected( gHandle ) ){
-            puts( "\nConnection established!" );
+    while(!connected){
+        gHandle = LeddarCreate();
+
+        char lAddress[24];
+        lAddress[0] = 0;
+
+        if ( LeddarConnect( gHandle, lAddress ) == LD_SUCCESS ){
+            if( LeddarGetConnected( gHandle ) ){
+                puts( "\nConnection established!" );
+                connected = true;
+            }
         }
-    }
 
-    else{
-        puts( "\nConnection failed!" );
+        else{
+            puts( "\nConnection failed!" );
+            connected = false;
+        }
     }
 }
 

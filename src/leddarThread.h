@@ -5,24 +5,6 @@
 #include "UI/mainwindow.h"
 #include <QtGui/QApplication>
 
-class leddarThread : public QThread
-{
-    Q_OBJECT
-    MainWindow* w;
-    QApplication* app;
-public:
-    explicit leddarThread(MainWindow *in_w, QApplication *in_app, QObject *parent = 0);
-    
-signals:
-    
-public slots:
-
-protected:
-    void run();
-    
-};
-
-
 class leddarTimer : public QTimer {
   Q_OBJECT
 public:
