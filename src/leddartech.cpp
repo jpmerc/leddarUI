@@ -105,8 +105,9 @@ void leddarTimer::RoundRobinSlot() {
   }
 
   CONFIG_PARAMS parameters = g_param_vector.at(g_param_vector_index);
+  stopLeddarData();
   setLeddarParameters(parameters);
-
+  stopLeddarData();
 }
 
 void leddarTimer::LogFileSlot() {
@@ -204,6 +205,7 @@ CheckError( int aCode )
 static unsigned char
 DataCallback( void *aHandle, unsigned int aLevels )
 {
+    std::cout << "Entering Data Callback!" << std::endl;
     LdDetection lDetections[50];
     unsigned int i, j, lCount = LeddarGetDetectionCount( aHandle );
     //std::cout << std::endl << " lCount = " << lCount << std::endl;
