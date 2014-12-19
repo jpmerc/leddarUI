@@ -146,7 +146,7 @@ void leddarTimer::pingLeddar() {
         startLeddarData();
         data_callback_called = 0;
     }
-    data_callback_called_mutex.unlock()
+    data_callback_called_mutex.unlock();
 
 
 }
