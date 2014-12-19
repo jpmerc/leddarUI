@@ -93,6 +93,13 @@ void MainWindow::refreshGraphData(){
     QVector<double> data_y = *y_data_;
     data_mutex.unlock();
 
+    std::cout << "refresh___.cpp : " ;
+    //Write the distance
+    for(int i = 0; i < 16; i++){
+        std::cout << data_y.at(i) << ",";
+    }
+    std::cout << std::endl;
+
     //std::cout <<  "Size(x) = " << data_x.size() <<  "  Size(y) = " << data_y.size() <<  std::endl;
 
     ui->customPlot->graph()->setData(data_x, data_y);
@@ -106,6 +113,14 @@ void MainWindow::setData(QVector<double> *vec_x, QVector<double> *vec_y){
     data_mutex.lock();
     *x_data_ = *vec_x;
     *y_data_ = *vec_y;
+
+    std::cout << "set_data__.cpp : " ;
+    //Write the distance
+    for(int i = 0; i < 16; i++){
+        std::cout << y_data_->at(i) << ",";
+    }
+    std::cout << std::endl;
+
     data_mutex.unlock();
 }
 

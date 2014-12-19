@@ -279,10 +279,15 @@ DataCallback( void *aHandle, unsigned int aLevels )
         QString date_time_string = date_time.currentDateTime().toString("yyyy-MM-dd-hh-mm-ss-zzz");
         out << date_time_string << ",";
 
+        std::cout << "leddartech.cpp : " ;
+
         //Write the distance
         for(int i = 0; i < 16; i++){
             out << y_distance.at(i) << ",";
+            std::cout << y_distance.at(i) << ",";
         }
+
+        std::cout << std::endl;
 
         //Write the amplitude
         for(int i = 0; i < 16; i++){
