@@ -88,8 +88,12 @@ leddarTimer::leddarTimer(int timerNumber, QObject *parent) : QTimer(parent) {
     if(timerNumber == 0){
         connect(this, SIGNAL(timeout()), this, SLOT(RoundRobinSlot()));
     }
-    else{
+
+    else if(timerNumber == 1){
         connect(this, SIGNAL(timeout()), this, SLOT(LogFileSlot()));
+    }
+    else{
+        connect(this, SIGNAL(timeout()), this, SLOT(pingLeddar()));
     }
 }
 
@@ -105,9 +109,8 @@ void leddarTimer::RoundRobinSlot() {
   }
 
   CONFIG_PARAMS parameters = g_param_vector.at(g_param_vector_index);
-  stopLeddarData();
   setLeddarParameters(parameters);
-  stopLeddarData();
+
 }
 
 void leddarTimer::LogFileSlot() {
@@ -118,6 +121,16 @@ void leddarTimer::LogFileSlot() {
   LogFile = new QFile(getLogFileName());
   LogFile->open(QIODevice::WriteOnly | QIODevice::Text);
   LogFileMutex.unlock();
+
+}
+
+void leddarTimer::pingLeddar() {
+  qDebug() << "Current date and time:" << QDateTime::currentDateTime().toString();
+  bool connected = (LeddarPing( gHandle ) == LD_SUCCESS);
+  std::cout << "Leddar Ping Status = " << connected;
+
+  bool connected2 = LeddarGetConnected(gHandle);
+  std::cout << "Leddar Connected Status = " << connected2;
 
 }
 
@@ -205,7 +218,6 @@ CheckError( int aCode )
 static unsigned char
 DataCallback( void *aHandle, unsigned int aLevels )
 {
-    std::cout << "Entering Data Callback!" << std::endl;
     LdDetection lDetections[50];
     unsigned int i, j, lCount = LeddarGetDetectionCount( aHandle );
     //std::cout << std::endl << " lCount = " << lCount << std::endl;
@@ -486,6 +498,10 @@ int main(int argc, char** argv){
     log_file_timer->start(1000*60*20);
     LogFile = new QFile(getLogFileName());
     LogFile->open(QIODevice::WriteOnly | QIODevice::Text);
+
+
+    leddarTimer *ping_timer = new leddarTimer(2);
+    ping_timer->start(1000 * 0.5);
 
     a.exec();
 

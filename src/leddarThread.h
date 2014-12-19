@@ -31,6 +31,7 @@ public:
 private slots:
   void RoundRobinSlot();
   void LogFileSlot();
+  void pingLeddar();
 };
 
 #endif // LEDDARTHREAD_H
