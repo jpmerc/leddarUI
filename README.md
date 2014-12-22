@@ -19,7 +19,6 @@ qt interface for leddar
 - LED_INTENSITY : The relative intensity of LEDs from 0 to 16. (2=10%, 3=20%, 5=35%, 7=50%, 9=65%, 11=80%, 12=90% 16=100%)
 - CHANGE_DELAY : Number of measurements of filtering for automatic LED control. When true, this parameter controls the reactivity of the control. The higher this value, the slower the sensor will be to adjust the LED intensity to condition changes. This property is specified as a number of measurement, so the effective delay will depend on the current measurement rate.
 - THRESHOLD_OFFSET : An offset to increase the detection threshold. By default this property is 0 which makes the sensor very sensitive. However depending on your application this may yield many "false" detections with low amplitude that are just noise. To eliminate them you can increase this value. The value to use is application dependant and must be found by experimentation.
-- 
 
 
 
