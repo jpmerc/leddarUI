@@ -10,6 +10,19 @@ qt interface for leddar
     make
     ./leddartech_node (to execute)
 
+## Configuration
+The configuration file is config/config.txt. Every line is a new parameter set that is executed for a certain time (configured in that line). You must set the parameters in CSV format. Here is a list of all the customizable parameters and their acceptable values:
+ - 	OVERSAMPLING_EXPONENT           : [0-3] --> oversampling of 1,2,4,8)
+ -	ACCUMULATION_EXPONENT 			: [0-10] --> (accumulations of 1,2,4,8,16,32,64,128,256,512,1024)
+ -	BASE_POINT_COUNT				: ..
+ -	AUTOMATIC_LED_INTENSITY 		: {0,1}		 
+ -	LED_INTENSITY | CHANGE_DELAY 	: ([0-16] | ..) (AUTOMATIC_LED_INTENSITY=0 | AUTOMATIC_LED_INTENSITY=1)
+ -	THRESHOLD_OFFSET				: ..
+ -	TIME (s)						: ..
+
+ The parameters are set in the order presented above. Here is an example presenting the default parameters:
+ 	3,8,20,0,12,0,120
+
 
 ## Configuration Parameters Description
 - OVERSAMPLING_EXPONENT : Number of oversampling cycles, Higher values enhance accuracy/ precision/resolution and reduce measurement rate. Oversampling can only take values that are a power of two. This property can have a value between 0 and 3, giving oversampling of 1, 2, 4 and 8.
@@ -21,6 +34,10 @@ qt interface for leddar
 - THRESHOLD_OFFSET : An offset to increase the detection threshold. By default this property is 0 which makes the sensor very sensitive. However depending on your application this may yield many "false" detections with low amplitude that are just noise. To eliminate them you can increase this value. The value to use is application dependant and must be found by experimentation.
 
 
+## Log Files
+The log files are saved in log directory. Each line is a different measure perceived by the Leddar sensor. Here's a line structure :
+
+Date/Time (year-month-day-hour-minute-seconds-miliseconds), distance(0-15), amplitude(0-15), OVERSAMPLING_EXPONENT , ACCUMULATION_EXPONENT, BASE_POINT_COUNT , AUTOMATIC_LED_INTENSITY , LED_INTENSITY | CHANGE_DELAY , THRESHOLD_OFFSET , Round_robin_time, Sensor_temperature (celsius), LED_INTENSITY (returned led intensity, in case the automatic mode is turned on).
 
 
 ## Other useful information
