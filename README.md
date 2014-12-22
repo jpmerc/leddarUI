@@ -3,6 +3,12 @@ leddarUI
 
 qt interface for leddar
 
+## Build
+
+    cd build (mkdir if it does not exist)
+    cmake ..
+    make
+    ./leddartech_node (to execute)
 
 
 ## Configuration 
