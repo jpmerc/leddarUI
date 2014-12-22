@@ -49,4 +49,5 @@ Date/Time (year-month-day-hour-minute-seconds-miliseconds), distance(0-15), ampl
 - Start wifi config from a terminal in X session : /usr/sbin/wpa_gui
 - The program is launched just after the X session is started. The script that makes this behavior is /etc/X11/xsession.d/99-leddartech. 
 - 10-leddartech.rules must be placed in /etc/udev/rules.d/ folder
+- This repository is placed in /home/pi/dev/ on the Raspberry Pi
 
